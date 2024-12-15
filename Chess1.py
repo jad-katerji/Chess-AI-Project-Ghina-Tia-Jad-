@@ -165,9 +165,11 @@ class Chess1:
 
 #-------------------------------MiniMax no improvement-------------
     def MiniMax(self,player):
-        self.nbExpandedNodes=self.nbExpandedNodes+1        
-        if self.GameOver():
+        self.nbExpandedNodes=self.nbExpandedNodes+1
+        depth=5
+        if self.GameOver() or self.nbExpandedNodes==depth:
             score = self.Evaluate()
+            self.nbExpandedNodes=0
             return score
         elif player==self.MAX:
             return self.MaxValue()
@@ -175,17 +177,46 @@ class Chess1:
             return self.MinValue()
         
     def MaxValue(self):
-        #code goes here
+        v=-infinity
+        for move in self.GetNextPossibleMoves(self.MAX):
+            self.ExecuteMove(move,self.MAX)
+            score=self.MiniMax(self.MIN)
+            if score>v:
+                v=score
+            self.UndoMove(self,move)
         return v
-
     def MinValue(self):
-        #code goes here
+        v=+infinity
+        for move in self.GetNextPossibleMoves(self.MIN):
+            self.ExecuteMove(move,self.MIN)
+            score=self.MiniMax(self.MAX)
+            if score<v:
+                v=score
+            self.UndoMove(self,move)
         return v
     
     def GetBestMove(self,player):
-        #code goes here
         bestMove=None
-        bestScore=None
+        if player==self.MAX:
+            nextPlayer=self.MIN
+            bestScore=-infinity
+        if player==self.MIN:
+            nextPlayer=self.MAX
+            bestScore=+infinity
+        
+        for move in self.GetNextPossibleMoves(player):
+            self.ExecuteMove(move,player)
+            moveScore=self.MiniMax(nextPlayer)
+            self.UndoMove(self,move)
+            if player==self.MAX:
+                if moveScore>bestScore:
+                    bestMove=move
+                    bestScore=moveScore
+            elif player==self.MAX:
+                if moveScore<bestScore:
+                    bestMove=move
+                    bestScore=moveScore
+                    
         return (bestMove,bestScore)
 #-------------------------------End of MiniMax no improvement-------
 
