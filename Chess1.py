@@ -225,6 +225,23 @@ class Chess1:
         return (bestMove,bestScore)
 #-------------------------------End of MiniMax no improvement-------
 
+    def basicEvaluate(self,player):
+        piecePoints={'p':1,'R':5,'N':3,'B':3,'Q':9}
+        score=0
+        if player==self.MAX:
+            playerColor='w'
+            opponentColor='b'
+        else:
+            playerColor='b'
+            opponentColor='w'
+
+        for piece in self.AvailablePieces(player):
+            if piece[0]==playerColor:
+                score+=piecePoints[piece[1]]
+            elif piece[0]==opponentColor:
+                score-=piecePoints[piece[1]]
+        return score
+
 
 game = Chess1()
 game.DisplayBoard()
