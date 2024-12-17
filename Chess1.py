@@ -164,7 +164,7 @@ class Chess1:
             
 
 #-------------------------------MiniMax no improvement-------------
-    def MiniMax(self,player):
+    def MiniMax(self,player,alpha,beta):
         self.nbExpandedNodes=self.nbExpandedNodes+1
         depth=5
         if self.GameOver() or self.nbExpandedNodes==depth:
@@ -172,26 +172,30 @@ class Chess1:
             self.nbExpandedNodes=0
             return score
         elif player==self.MAX:
-            return self.MaxValue()
+            return self.MaxValue(alpha,beta)
         else:
-            return self.MinValue()
+            return self.MinValue(alpha,beta)
         
-    def MaxValue(self):
+    def MaxValue(self,alpha,beta):
         v=-infinity
         for move in self.GetNextPossibleMoves(self.MAX):
             self.ExecuteMove(move,self.MAX)
-            score=self.MiniMax(self.MIN)
-            if score>v:
-                v=score
+            score=self.MiniMax(self.MIN,alpha,beta)
+            v=max(v,score)
+            if v >= beta:
+                return v
+            alpha= max(alpha, v)
             self.UndoMove(self,move)
         return v
-    def MinValue(self):
+    def MinValue(self,alpha,beta):
         v=+infinity
         for move in self.GetNextPossibleMoves(self.MIN):
             self.ExecuteMove(move,self.MIN)
-            score=self.MiniMax(self.MAX)
-            if score<v:
-                v=score
+            score=self.MiniMax(self.MAX,alpha,beta)
+            v=min(v,score)
+            if v<=alpha:
+                return v
+            beta =min(beta,v)
             self.UndoMove(self,move)
         return v
     
@@ -203,10 +207,11 @@ class Chess1:
         if player==self.MIN:
             nextPlayer=self.MAX
             bestScore=+infinity
-        
+        alpha=-infinity
+        beta=+infinity
         for move in self.GetNextPossibleMoves(player):
             self.ExecuteMove(move,player)
-            moveScore=self.MiniMax(nextPlayer)
+            moveScore=self.MiniMax(nextPlayer,alpha,beta)
             self.UndoMove(self,move)
             if player==self.MAX:
                 if moveScore>bestScore:
