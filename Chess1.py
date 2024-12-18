@@ -46,11 +46,7 @@ class Chess1:
         self.state=copy.deepcopy(self.initState)
         self.nbExpandedNodes=0
                 
-<<<<<<< HEAD
-    def GetNextPossibleMoves(self,player):
-=======
     def GetNextPossibleMoves(self, player):
->>>>>>> 5aa64d18c4fd666698e8b762ba6d2e9ec2b805b7
         possibleMoves = []
         
         for piece in self.AvailablePieces(player):
@@ -211,26 +207,19 @@ class Chess1:
     def evaluate_endgame(self, player_color, opponent_color):
         # Reward king activity and passed pawns in the endgame
         score = 0
-        player_king = find_piece(state, 'wK' if player_color == 'w' else 'bK')
+        player_king = self.find_piece('wK' if player_color == 'w' else 'bK')
         if player_king:
             x, y = player_king
             score += (7 - x) * 0.1 if player_color == 'w' else x * 0.1
 
         # Check for passed pawns
-        score += evaluate_pawn_structure(player_color)
-        score -= evaluate_pawn_structure(opponent_color)
+        score += self.evaluate_pawn_structure(player_color)
+        score -= self.evaluate_pawn_structure(opponent_color)
         return score
   
 
     def IsGameWon(self, player): 
-        opponent = self.MIN if player == self.MAX else self.MAX
-        opponent_king = "bK" if opponent == self.MIN else "wK"
-        
-        # Check if the opponent's king is still on the board
-        for row in self.state:
-            if opponent_king in row:
-                return False
-        return True
+        return self.checkMate(player)
         
     def IsDraw(self):
         # Stalemate
@@ -413,7 +402,6 @@ class Chess1:
         return (bestMove,bestScore)
 #-------------------------------End of MiniMax no improvement-------
 
-<<<<<<< HEAD
     def basicEvaluate(self,player):
         piecePoints={'p':1,'R':5,'N':3,'B':3,'Q':9}
         score=0
@@ -427,8 +415,6 @@ class Chess1:
         for piece in self.AvailablePieces(opponent):
             score-=piecePoints[piece[1]]
         return score
-=======
->>>>>>> 5aa64d18c4fd666698e8b762ba6d2e9ec2b805b7
 
     def kingPosition(self,player):
         color=player[0]
