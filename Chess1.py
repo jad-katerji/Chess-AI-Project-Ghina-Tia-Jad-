@@ -23,22 +23,22 @@ class Chess1:
         
         # Define initial empty state
         self.state = np.array([["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
-            ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
-            ["--", "--", "--", "--", "--", "--", "--", "--"],
-            ["--", "--", "--", "--", "--", "--", "--", "--"],
-            ["--", "--", "--", "--", "--", "--", "--", "--"],
-            ["--", "--", "--", "--", "--", "--", "--", "--"],
-            ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
-            ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]]
-        )
+                        ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
+                        ["--", "--", "--", "--", "--", "--", "--", "--"],
+                        ["--", "--", "--", "--", "--", "--", "--", "--"],
+                        ["--", "--", "--", "--", "--", "--", "--", "--"],
+                        ["--", "--", "--", "--", "--", "--", "--", "--"],
+                        ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
+                        ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]]
+                                        )
         self.initState = [["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
-            ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
-            ["--", "--", "--", "--", "--", "--", "--", "--"],
-            ["--", "--", "--", "--", "--", "--", "--", "--"],
-            ["--", "--", "--", "--", "--", "--", "--", "--"],
-            ["--", "--", "--", "--", "--", "--", "--", "--"],
-            ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
-            ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]]
+                        ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
+                        ["--", "--", "--", "--", "--", "--", "--", "--"],
+                        ["--", "--", "--", "--", "--", "--", "--", "--"],
+                        ["--", "--", "--", "--", "--", "--", "--", "--"],
+                        ["--", "--", "--", "--", "--", "--", "--", "--"],
+                        ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
+                        ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]]
         
         self.nbExpandedNodes=0
         
@@ -238,7 +238,7 @@ class Chess1:
         return False
 
 
-    def ExecuteMove(self, move):
+    def ExecuteMove(self, move): # move = ((oldx,oldy),(newx,newy))
         start, end = move
         captured_piece = self.state[end[0]][end[1]]  # Store end state in case there is a captured piece
         self.state[end[0]][end[1]] = self.state[start[0]][start[1]]  
@@ -246,7 +246,7 @@ class Chess1:
         return captured_piece  # Return captured piece for undo 
 
 
-    def UndoMove(self, move):
+    def UndoMove(self, move): # move = ((oldx,oldy),(newx,newy), captured_piece)
         start, end, captured_piece = move
         self.state[start[0]][start[1]] = self.state[end[0]][end[1]]  # Move piece back
         self.state[end[0]][end[1]] = captured_piece  # Restore captured piece or empty square
@@ -255,7 +255,7 @@ class Chess1:
 
     def DisplayBoard(self):
         print("Expanded nodes:",self.nbExpandedNodes)
-        print(game.state)
+        print(self.state)
         print("\n")
         
         
@@ -292,7 +292,7 @@ class Chess1:
                         if self.state[x][y] == "--": #empty space
                             moves.append((piece[1], (x,y))) 
                         elif "b" in self.state[x][y]: # capture
-                            moves.append((x,y))
+                            moves.append((piece[1], (x,y)))
                 
                 else:  # pieces with iterative moves 
                     while True:
@@ -303,7 +303,7 @@ class Chess1:
                             if self.state[x][y] == "--": #empty space
                                 moves.append((piece[1], (x,y)))
                             elif "b" in self.state[x][y]: # capture
-                                moves.append((x,y))
+                                moves.append((piece[1], (x,y)))
                             else: break # friendly piece
                         else: break
             return moves # move = ((oldx,oldy),(newx,newy))
@@ -322,7 +322,7 @@ class Chess1:
                         if self.state[x][y] == "--": #empty space
                             moves.append((piece[1], (x,y)))
                         elif "w" in self.state[x][y]: # capture
-                            moves.append((x,y))
+                            moves.append((piece[1], (x,y)))
                 
                 else:  # pieces with iterative moves 
                     while True:
@@ -331,7 +331,7 @@ class Chess1:
                         
                         if 0 <= x < 8 and 0 <= y < 8: #to stay within bounds
                             if self.state[x][y] == "--": #empty space
-                                moves.append((x,y))
+                                moves.append((piece[1], (x,y)))
                             elif "w" in self.state[x][y]: # capture
                                 moves.append((piece[1], (x,y)))
                             else: break # friendly piece
@@ -343,9 +343,9 @@ class Chess1:
 #-------------------------------MiniMax no improvement-------------
     def MiniMax(self,player,alpha,beta):
         self.nbExpandedNodes=self.nbExpandedNodes+1
-        depth=3
+        depth=5
         if self.GameOver() or self.nbExpandedNodes==depth:
-            score = self.Evaluate()
+            score = self.Evaluate(player)
             self.nbExpandedNodes=0
             return score
         elif player==self.MAX:
@@ -356,6 +356,7 @@ class Chess1:
     def MaxValue(self,alpha,beta):
         v=-infinity
         for move in self.GetNextPossibleMoves(self.MAX):
+            self.DisplayBoard()
             captured_piece = self.ExecuteMove(move)
             score=self.MiniMax(self.MIN,alpha,beta)
             v=max(v,score)
@@ -367,13 +368,14 @@ class Chess1:
     def MinValue(self,alpha,beta):
         v=+infinity
         for move in self.GetNextPossibleMoves(self.MIN):
-            self.ExecuteMove(move)
+            self.DisplayBoard()
+            captured_piece = self.ExecuteMove(move)
             score=self.MiniMax(self.MAX,alpha,beta)
             v=min(v,score)
             if v<=alpha:
                 return v
             beta =min(beta,v)
-            self.UndoMove(self,move)
+            self.UndoMove((move[0],move[1],captured_piece))
         return v
     
     def GetBestMove(self,player):
@@ -387,14 +389,15 @@ class Chess1:
         alpha=-infinity
         beta=+infinity
         for move in self.GetNextPossibleMoves(player):
-            self.ExecuteMove(move)
+            captured_piece = self.ExecuteMove(move)
+            self.DisplayBoard()
             moveScore=self.MiniMax(nextPlayer,alpha,beta)
-            self.UndoMove(self,move)
+            self.UndoMove((move[0],move[1],captured_piece))
             if player==self.MAX:
                 if moveScore>bestScore:
                     bestMove=move
                     bestScore=moveScore
-            elif player==self.MAX:
+            elif player==self.MIN:
                 if moveScore<bestScore:
                     bestMove=move
                     bestScore=moveScore
@@ -478,7 +481,4 @@ class Chess1:
 
 
 
-game = Chess1()
-game.DisplayBoard()
-print(game.Evaluate("white"))
 
