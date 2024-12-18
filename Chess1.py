@@ -69,12 +69,18 @@ class Chess1:
         return False
 
 
-    def ExecuteMove(self,move,player):
-        #code goes here
-        return self.state
-    
-    def UndoMove(self,move):
-        #code goes here
+    def ExecuteMove(self, move, player):
+        start, end = move
+        captured_piece = self.state[end[0]][end[1]]  # Store end state in case there is a captured piece
+        self.state[end[0]][end[1]] = self.state[start[0]][start[1]]  
+        self.state[start[0]][start[1]] = "--"  
+        return captured_piece  # Return captured piece for undo 
+
+
+    def UndoMove(self, move):
+        start, end, captured_piece = move
+        self.state[start[0]][start[1]] = self.state[end[0]][end[1]]  # Move piece back
+        self.state[end[0]][end[1]] = captured_piece  # Restore captured piece or empty square
         return self.state
 
     def DisplayBoard(self):
