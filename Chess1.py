@@ -46,15 +46,74 @@ class Chess1:
         self.state=copy.deepcopy(self.initState)
         self.nbExpandedNodes=0
                 
-    def GetNextPossibleMoves(self):
+    def GetNextPossibleMoves(self, player):
         possibleMoves = []
-        #code goes here
+        
+        for piece in self.AvailablePieces(player):
+            possibleMoves = possibleMoves + self.generate_possible_moves(piece)
         
         return possibleMoves
 
     def Evaluate(self):
-        #code goes here
-        return 0  
+        # Piece values
+        piece_values = {
+            'wp': 1, 'wN': 3, 'wB': 3, 'wR': 5, 'wQ': 9, 'wK': 0,  # White pieces
+            'bp': -1, 'bN': -3, 'bB': -3, 'bR': -5, 'bQ': -9, 'bK': 0  # Black pieces
+        }
+        
+        # Positional scores (simplified for pawns and knights)
+        pawn_table = [
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [5, 5, 5, 5, 5, 5, 5, 5],
+            [1, 1, 2, 3, 3, 2, 1, 1],
+            [0.5, 0.5, 1, 2.5, 2.5, 1, 0.5, 0.5],
+            [0, 0, 0, 2, 2, 0, 0, 0],
+            [0.5, -0.5, -1, 0, 0, -1, -0.5, 0.5],
+            [0.5, 1, 1, -2, -2, 1, 1, 0.5],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+        ]
+        
+        knight_table = [
+            [-5,  -4,  -3,  -3,  -3,  -3,  -4, -5],
+            [-4,  -2,   0,   0,   0,   0,  -2, -4],
+            [-3,   0,   1, 1.5, 1.5,   1,   0, -3],
+            [-3, 0.5, 1.5,   2,   2, 1.5, 0.5, -3],
+            [-3,   0, 1.5,   2,   2, 1.5,   0, -3],
+            [-3, 0.5,   1, 1.5, 1.5,   1, 0.5, -3],
+            [-4,  -2,   0, 0.5, 0.5,   0,  -2, -4],
+            [-5,  -4,  -3,  -3,  -3,  -3,  -4, -5]
+        ]
+        
+        # Evaluate material
+        material_score = 0
+        positional_score = 0
+        for row in range(len(self.state)):
+            for cell in range(len(self.state[row])):
+                if self.state[row][cell] != "--":
+                    
+                    #generating the piece
+                    piece = (self.state[row][cell], (row,cell))
+                    
+                    # Material score
+                    material_score += piece_values[piece[0]]
+                    
+                    # Positional score
+                    if piece[0][1] == 'p':  # Pawns
+                        positional_score += pawn_table[piece[1][0]][piece[1][1]] if "w" in piece[0] else -pawn_table[piece[1][0]][piece[1][1]]
+                    elif piece[0][1] == 'N':  # Knights
+                        positional_score += knight_table[piece[1][0]][piece[1][1]] if "w" in piece[0] else -knight_table[piece[1][0]][piece[1][1]]
+            
+        # Mobility
+        available_moves = self.GetNextPossibleMoves(self.MAX)
+        
+        
+            
+        mobility_score = len(available_moves)
+        
+        # Combine scores
+        evaluation = material_score + positional_score + 0.1 * mobility_score
+        return evaluation
+  
 
     def IsGameWon(self, player):
         #code goes here
@@ -80,6 +139,7 @@ class Chess1:
     def DisplayBoard(self):
         print("Expanded nodes:",self.nbExpandedNodes)
         print(game.state)
+        print("\n")
         
         
     
@@ -108,19 +168,19 @@ class Chess1:
                 x,y = piece[1]
                 
                 if key == 'p' or key == 'N' or key == 'K': # pieces with non-iterative moves
-                    x += dx
-                    y += dy
+                    x -= dx
+                    y -= dy
                     
                     if 0 <= x < 8 and 0 <= y < 8: #to stay within bounds
                         if self.state[x][y] == "--": #empty space
-                            moves.append((x,y))
+                            moves.append((piece[0], (x,y)))
                         elif "b" in self.state[x][y]: # capture
                             moves.append((x,y))
                 
                 else:  # pieces with iterative moves 
                     while True:
-                        x += dx
-                        y += dy
+                        x -= dx
+                        y -= dy
                         
                         if 0 <= x < 8 and 0 <= y < 8: #to stay within bounds
                             if self.state[x][y] == "--": #empty space
@@ -223,5 +283,5 @@ class Chess1:
 
 game = Chess1()
 game.DisplayBoard()
-print(game.generate_possible_moves(("wN",(3,3))))
+print(game.Evaluate())
 
