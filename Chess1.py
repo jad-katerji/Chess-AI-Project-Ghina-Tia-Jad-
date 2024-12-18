@@ -445,7 +445,7 @@ class Chess1:
 
     def validMove(self,piece,endPosition):
         for move in self.generate_possible_moves(piece):
-            if move==endPosition:
+            if move[1]==endPosition:
                 return True
         return False
 
@@ -461,12 +461,12 @@ class Chess1:
         protected=True
         if self.check(player):
             for move in self.GetNextPossibleMoves(player):
-                self.ExecuteMove(move)
+                capturedPiece=self.ExecuteMove(move)
                 if self.check(player):
                     protected=False
                 else:
                     protected=True
-                self.UndoMove(move)
+                self.UndoMove((move[0],move[1],capturedPiece))
 
                 if protected:
                     return True
