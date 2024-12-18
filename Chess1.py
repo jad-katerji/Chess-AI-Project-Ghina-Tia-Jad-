@@ -115,25 +115,45 @@ class Chess1:
         return evaluation
   
 
-    def IsGameWon(self, player):
-        #code goes here
-        return False
-
+    def IsGameWon(self, player): 
+        opponent = self.MIN if player == self.MAX else self.MAX
+        opponent_king = "bK" if opponent == self.MIN else "wK"
+        
+        # Check if the opponent's king is still on the board
+        for row in self.state:
+            if opponent_king in row:
+                return False
+        return True
+        
     def IsDraw(self):
-        #code goes here
+        # Stalemate
+        if not self.GetNextPossibleMoves():
+            return True
+    
+        # Insufficient material
+        pieces = "".join(["".join(row) for row in self.state])
+        if all(p in "wbK--" for p in pieces):  # Only kings are left
+            return True
         return False
 
     def GameOver(self):
-        #code goes here
+        if self.IsGameWon(self.MAX) or self.IsGameWon(self.MIN) or self.IsDraw():
+            return True
         return False
 
 
-    def ExecuteMove(self,move,player):
-        #code goes here
-        return self.state
-    
-    def UndoMove(self,move):
-        #code goes here
+    def ExecuteMove(self, move, player):
+        start, end = move
+        captured_piece = self.state[end[0]][end[1]]  # Store end state in case there is a captured piece
+        self.state[end[0]][end[1]] = self.state[start[0]][start[1]]  
+        self.state[start[0]][start[1]] = "--"  
+        return captured_piece  # Return captured piece for undo 
+
+
+    def UndoMove(self, move):
+        start, end, captured_piece = move
+        self.state[start[0]][start[1]] = self.state[end[0]][end[1]]  # Move piece back
+        self.state[end[0]][end[1]] = captured_piece  # Restore captured piece or empty square
         return self.state
 
     def DisplayBoard(self):
@@ -224,7 +244,7 @@ class Chess1:
             
 
 #-------------------------------MiniMax no improvement-------------
-    def MiniMax(self,player):
+    def MiniMax(self,player,alpha,beta):
         self.nbExpandedNodes=self.nbExpandedNodes+1
         depth=5
         if self.GameOver() or self.nbExpandedNodes==depth:
@@ -232,26 +252,30 @@ class Chess1:
             self.nbExpandedNodes=0
             return score
         elif player==self.MAX:
-            return self.MaxValue()
+            return self.MaxValue(alpha,beta)
         else:
-            return self.MinValue()
+            return self.MinValue(alpha,beta)
         
-    def MaxValue(self):
+    def MaxValue(self,alpha,beta):
         v=-infinity
         for move in self.GetNextPossibleMoves(self.MAX):
             self.ExecuteMove(move,self.MAX)
-            score=self.MiniMax(self.MIN)
-            if score>v:
-                v=score
+            score=self.MiniMax(self.MIN,alpha,beta)
+            v=max(v,score)
+            if v >= beta:
+                return v
+            alpha= max(alpha, v)
             self.UndoMove(self,move)
         return v
-    def MinValue(self):
+    def MinValue(self,alpha,beta):
         v=+infinity
         for move in self.GetNextPossibleMoves(self.MIN):
             self.ExecuteMove(move,self.MIN)
-            score=self.MiniMax(self.MAX)
-            if score<v:
-                v=score
+            score=self.MiniMax(self.MAX,alpha,beta)
+            v=min(v,score)
+            if v<=alpha:
+                return v
+            beta =min(beta,v)
             self.UndoMove(self,move)
         return v
     
@@ -263,10 +287,11 @@ class Chess1:
         if player==self.MIN:
             nextPlayer=self.MAX
             bestScore=+infinity
-        
+        alpha=-infinity
+        beta=+infinity
         for move in self.GetNextPossibleMoves(player):
             self.ExecuteMove(move,player)
-            moveScore=self.MiniMax(nextPlayer)
+            moveScore=self.MiniMax(nextPlayer,alpha,beta)
             self.UndoMove(self,move)
             if player==self.MAX:
                 if moveScore>bestScore:
@@ -279,6 +304,19 @@ class Chess1:
                     
         return (bestMove,bestScore)
 #-------------------------------End of MiniMax no improvement-------
+
+    def basicEvaluate(self,player):
+        piecePoints={'p':1,'R':5,'N':3,'B':3,'Q':9}
+        score=0
+        playerColor=self.MAX[0]
+        opponentColor=self.MIN[0]
+
+        for piece in self.AvailablePieces(player):
+            if piece[0]==playerColor:
+                score+=piecePoints[piece[1]]
+            elif piece[0]==opponentColor:
+                score-=piecePoints[piece[1]]
+        return score
 
 
 game = Chess1()
