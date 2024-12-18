@@ -228,12 +228,8 @@ class Chess1:
     def basicEvaluate(self,player):
         piecePoints={'p':1,'R':5,'N':3,'B':3,'Q':9}
         score=0
-        if player==self.MAX:
-            playerColor='w'
-            opponentColor='b'
-        else:
-            playerColor='b'
-            opponentColor='w'
+        playerColor=self.MAX[0]
+        opponentColor=self.MIN[0]
 
         for piece in self.AvailablePieces(player):
             if piece[0]==playerColor:
