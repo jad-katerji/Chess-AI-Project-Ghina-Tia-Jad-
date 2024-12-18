@@ -56,25 +56,45 @@ class Chess1:
         #code goes here
         return 0  
 
-    def IsGameWon(self, player):
-        #code goes here
-        return False
-
+    def IsGameWon(self, player): 
+        opponent = self.MIN if player == self.MAX else self.MAX
+        opponent_king = "bK" if opponent == self.MIN else "wK"
+        
+        # Check if the opponent's king is still on the board
+        for row in self.state:
+            if opponent_king in row:
+                return False
+        return True
+        
     def IsDraw(self):
-        #code goes here
+        # Stalemate
+        if not self.GetNextPossibleMoves():
+            return True
+    
+        # Insufficient material
+        pieces = "".join(["".join(row) for row in self.state])
+        if all(p in "wbK--" for p in pieces):  # Only kings are left
+            return True
         return False
 
     def GameOver(self):
-        #code goes here
+        if self.IsGameWon(self.MAX) or self.IsGameWon(self.MIN) or self.IsDraw():
+            return True
         return False
 
 
-    def ExecuteMove(self,move,player):
-        #code goes here
-        return self.state
-    
-    def UndoMove(self,move):
-        #code goes here
+    def ExecuteMove(self, move, player):
+        start, end = move
+        captured_piece = self.state[end[0]][end[1]]  # Store end state in case there is a captured piece
+        self.state[end[0]][end[1]] = self.state[start[0]][start[1]]  
+        self.state[start[0]][start[1]] = "--"  
+        return captured_piece  # Return captured piece for undo 
+
+
+    def UndoMove(self, move):
+        start, end, captured_piece = move
+        self.state[start[0]][start[1]] = self.state[end[0]][end[1]]  # Move piece back
+        self.state[end[0]][end[1]] = captured_piece  # Restore captured piece or empty square
         return self.state
 
     def DisplayBoard(self):
