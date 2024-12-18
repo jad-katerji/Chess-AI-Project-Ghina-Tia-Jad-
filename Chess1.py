@@ -56,16 +56,30 @@ class Chess1:
         #code goes here
         return 0  
 
-    def IsGameWon(self, player):
-        #code goes here
-        return False
-
+    def IsGameWon(self, player): 
+        opponent = self.MIN if player == self.MAX else self.MAX
+        opponent_king = "bK" if opponent == self.MIN else "wK"
+        
+        # Check if the opponent's king is still on the board
+        for row in self.state:
+            if opponent_king in row:
+                return False
+        return True
+        
     def IsDraw(self):
-        #code goes here
+        # Stalemate
+        if not self.GetNextPossibleMoves():
+            return True
+    
+        # Insufficient material
+        pieces = "".join(["".join(row) for row in self.state])
+        if all(p in "wbK--" for p in pieces):  # Only kings are left
+            return True
         return False
 
     def GameOver(self):
-        #code goes here
+        if self.IsGameWon(self.MAX) or self.IsGameWon(self.MIN) or self.IsDraw():
+            return True
         return False
 
 
