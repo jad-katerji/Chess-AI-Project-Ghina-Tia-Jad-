@@ -46,7 +46,11 @@ class Chess1:
         self.state=copy.deepcopy(self.initState)
         self.nbExpandedNodes=0
                 
+<<<<<<< HEAD
+    def GetNextPossibleMoves(self,player):
+=======
     def GetNextPossibleMoves(self, player):
+>>>>>>> 5aa64d18c4fd666698e8b762ba6d2e9ec2b805b7
         possibleMoves = []
         
         for piece in self.AvailablePieces(player):
@@ -411,6 +415,83 @@ class Chess1:
                     
         return (bestMove,bestScore)
 #-------------------------------End of MiniMax no improvement-------
+
+<<<<<<< HEAD
+    def basicEvaluate(self,player):
+        piecePoints={'p':1,'R':5,'N':3,'B':3,'Q':9}
+        score=0
+        if player==self.MAX:
+            opponent=self.MIN
+        else:
+            opponent=self.MAX
+
+        for piece in self.AvailablePieces(player): 
+            score+=piecePoints[piece[1]]
+        for piece in self.AvailablePieces(opponent):
+            score-=piecePoints[piece[1]]
+        return score
+=======
+>>>>>>> 5aa64d18c4fd666698e8b762ba6d2e9ec2b805b7
+
+    def kingPosition(self,player):
+        color=player[0]
+        king=color+'K'
+        kingPosition=()
+        for i in range(len(self.state)):
+            for j in range(len(self.state[i])):
+                if self.state[i][j]==king:
+                    kingPosition=(i,j)
+                    return kingPosition
+                
+    
+    def check(self,player):
+        threats=[]
+        if player==self.MAX:
+            opponent=self.MIN
+        else:
+            opponent=self.MAX
+        for piece in self.AvailablePieces(opponent):
+            if self.validMove(piece,self.kingPosition(player)):
+                threats.append(piece)
+        if threats:
+            return threats
+        return False
+
+    def validMove(self,piece,endPosition):
+        for move in self.generate_possible_moves(piece):
+            if move==endPosition:
+                return True
+        return False
+
+    def checkMate(self,player):#if the king is checked and if king cant move and if none of the remaining player pieces can block the check
+        color=player[0]
+        king=color+'K'
+
+        if self.check(player) and not self.generate_possible_moves((king,self.kingPosition(player))) and not self.canBlockCheck(player):
+            return True
+        return False
+    
+    def canBlockCheck(self,player):
+        protected=True
+        if self.check(player):
+            for move in self.GetNextPossibleMoves(player):
+                self.ExecuteMove(move)
+                if self.check(player):
+                    protected=False
+                else:
+                    protected=True
+                self.UndoMove(move)
+
+                if protected:
+                    return True
+            return False
+        return True
+
+
+    
+    
+        
+    
 
 
 
