@@ -42,6 +42,8 @@ class Chess1:
                         ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
                         ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]]
         
+        self.ActualState = copy.deepcopy(self.state)
+        
         self.nbExpandedNodes=0
         self.castling_rights = {"wK": True, "wQ": True, "bK": True, "bQ": True}  # Kingside and Queenside
         self.en_passant_square = None
@@ -60,7 +62,7 @@ class Chess1:
 
     def Evaluate(self, player):
         # Piece values and piece-square tables
-        print('evaluate')
+        #print('evaluate')
         piece_values = {'p': 1, 'R': 5, 'N': 3, 'B': 3, 'Q': 9, 'K': 0}
         pawn_table = [
             [0, 0, 0, 0, 0, 0, 0, 0],
@@ -273,7 +275,7 @@ class Chess1:
         self.state[end[0]][end[1]] = self.state[start[0]][start[1]]  
         self.state[start[0]][start[1]] = "--"
 
-        return captured_piece, castling_rights_before
+        return captured_piece, castling_rights_before, self.ActualState
 
  
 
@@ -304,7 +306,7 @@ class Chess1:
 
     def DisplayBoard(self):
         print("Expanded nodes:",self.nbExpandedNodes)
-        print(self.state)
+        print(self.ActualState)
         print("\n")
         
         
@@ -461,7 +463,7 @@ class Chess1:
 #-------------------------------MiniMax no improvement-------------
     def MiniMax(self,player,alpha,beta,depth,maxDepth):
         self.nbExpandedNodes=self.nbExpandedNodes+1
-        print(self.DisplayBoard())
+        print(f"Expanded Nodes:{self.nbExpandedNodes}")
         if self.GameOver() or maxDepth==depth:
             score = self.Evaluate(player)
             return score
@@ -474,7 +476,7 @@ class Chess1:
         v=-infinity
         for move in self.GetNextPossibleMoves(self.MAX):
             #print(self.DisplayBoard())
-            captured_piece,castling_rights = self.ExecuteMove(move)
+            captured_piece,castling_rights = self.ExecuteMove(move)[0:2]
             score=self.MiniMax(self.MIN,alpha,beta,depth,maxDepth)
             v=max(v,score)
             alpha= max(alpha, v)
@@ -486,7 +488,7 @@ class Chess1:
         v=+infinity
         for move in self.GetNextPossibleMoves(self.MIN):
             #print(self.DisplayBoard())
-            captured_piece,castling_rights = self.ExecuteMove(move)
+            captured_piece,castling_rights = self.ExecuteMove(move)[0:2]
             score=self.MiniMax(self.MAX,alpha,beta,depth,maxDepth)
             v=min(v,score)
             beta =min(beta,v)
@@ -496,6 +498,7 @@ class Chess1:
         return v
     
     def GetBestMove(self,player):
+        self.nbExpandedNodes = 0
         bestMove=None
         if player==self.MAX:
             nextPlayer=self.MIN
@@ -506,10 +509,10 @@ class Chess1:
         alpha=-infinity
         beta=+infinity
         for move in self.GetNextPossibleMoves(player):
-            captured_piece,castling_rights = self.ExecuteMove(move)
-            self.DisplayBoard()
+            captured_piece,castling_rights = self.ExecuteMove(move)[:2]
+            #self.DisplayBoard()
             moveScore=self.MiniMax(nextPlayer,alpha,beta,0,5)
-            print('move analyzed')
+            #print('move analyzed')
             self.UndoMove((move[0],move[1],captured_piece,castling_rights))
             if player==self.MAX:
                 if moveScore>bestScore:
@@ -519,7 +522,8 @@ class Chess1:
                 if moveScore<bestScore:
                     bestMove=move
                     bestScore=moveScore
-                    
+        self.ActualState[bestMove[1][0]][bestMove[1][1]] = self.ActualState[bestMove[0][0]][bestMove[0][1]]  
+        self.ActualState[bestMove[0][0]][bestMove[0][1]] = "--"      
         return (bestMove,bestScore)
 #-------------------------------End of MiniMax no improvement-------
 
