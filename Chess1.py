@@ -475,15 +475,27 @@ class Chess1:
                         elif "b" in self.state[x][y]:  # capture
                             moves.append((piece[1], (x, y)))
 
-                elif key == 'K':  # King movement
+                #King movement        
+                elif key == 'K':
                     x -= dx
                     y -= dy
-                    if 0 <= x < 8 and 0 <= y < 8:
-                        if self.state[x][y] == "--":
-                            moves.append((piece[1], (x, y)))
-                        elif "b" in self.state[x][y]:
-                            moves.append((piece[1], (x, y)))
 
+                    if 0 <= x < 8 and 0 <= y < 8:  # to stay within bounds
+                        if self.state[x][y] == "--" or "b" in self.state[x][y]:  # empty space or capture
+                            
+                            tentative_move = (piece[1], (x, y)) # Tentatively add the king's move
+                            moves.append(tentative_move)
+                            
+                            is_safe = True  # Check if any opponent piece can attack this square
+                            for opponent_piece in self.AvailablePieces(self.MIN):
+                                if opponent_piece[0][1] == 'K': continue  # Skip the opponent's king
+                                if self.validMove(opponent_piece, (x, y)):
+                                    is_safe = False
+                                    break  
+
+                            
+                            if not is_safe:
+                                moves.remove(tentative_move)
                     # Castling moves
                     if self.castling_rights["wK"]:
                         if self.state[7][5] == "--" and self.state[7][6] == "--" and not (self.check("white", (7, 4)) or self.check("white", (7, 5)) or self.check("white", (7, 6))):
@@ -548,15 +560,27 @@ class Chess1:
                         elif "w" in self.state[x][y]:  # capture
                             moves.append((piece[1], (x, y)))
 
+                #King movement        
                 elif key == 'K':
                     x += dx
                     y += dy
 
                     if 0 <= x < 8 and 0 <= y < 8:  # to stay within bounds
-                        if self.state[x][y] == "--":  # empty space
-                            moves.append((piece[1], (x, y)))
-                        elif "w" in self.state[x][y]:  # capture
-                            moves.append((piece[1], (x, y)))
+                        if self.state[x][y] == "--" or "w" in self.state[x][y]:  # empty space or capture
+                            
+                            tentative_move = (piece[1], (x, y)) # Tentatively add the king's move
+                            moves.append(tentative_move)
+                            
+                            is_safe = True  # Check if any opponent piece can attack this square
+                            for opponent_piece in self.AvailablePieces(self.MAX):
+                                if opponent_piece[0][1] == 'K': continue  # Skip the opponent's king
+                                if self.validMove(opponent_piece, (x, y)):
+                                    is_safe = False
+                                    break  
+
+                            
+                            if not is_safe:
+                                moves.remove(tentative_move)
                             
                     if piece[0] == "b" and self.castling_rights["bK"]:
                         if self.state[0][5] == "--" and self.state[0][6] == "--" and not (self.check("black", (0, 4)) or self.check("black", (0, 5)) or self.check("black", (6, 6))):
@@ -653,19 +677,7 @@ class Chess1:
         return (bestMove,bestScore)
 #-------------------------------End of MiniMax no improvement-------
 
-    def basicEvaluate(self,player):
-        piecePoints={'p':1,'R':5,'N':3,'B':3,'Q':9}
-        score=0
-        if player==self.MAX:
-            opponent=self.MIN
-        else:
-            opponent=self.MAX
-
-        for piece in self.AvailablePieces(player): 
-            score+=piecePoints[piece[1]]
-        for piece in self.AvailablePieces(opponent):
-            score-=piecePoints[piece[1]]
-        return score
+    
 
     def kingPosition(self,player):
         color=player[0]
@@ -722,89 +734,20 @@ class Chess1:
         return True
 
     
-# board=np.array([["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
-#         ["bp", "bp", "bp", "--", "bp", "bp", "bp", "bp"],
-#         ["--", "--", "--", "--", "--", "--", "--", "--"],
-#         ["--", "--", "--", "bp", "--", "--", "--", "--"],
-#         ["--", "--", "--", "--", "--", "--", "--", "--"],
-#         ["--", "--", "--", "--", "--", "--", "--", "--"],
-#         ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
-#         ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]])
+board=np.array([["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
+                 ["bp", "bp", "bp", "--", "bp", "bp", "bp", "bp"],
+                 ["--", "--", "--", "--", "--", "--", "--", "--"],
+                 ["--", "--", "--", "bB", "wK", "--", "--", "--"],
+                 ["--", "--", "--", "--", "--", "--", "--", "--"],
+                 ["--", "--", "--", "--", "--", "--", "--", "--"],
+                 ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
+                 ["wR", "wN", "wB", "wQ", "--", "wB", "wN", "wR"]])
 
-c.state = np.array([
-    ["--", "--", "--", "--", "--", "--", "--", "--"],
-    ["--", "--", "--", "--", "--", "--", "--", "--"],
-    ["--", "--", "--", "--", "--", "--", "--", "--"],
-    ["--", "--", "--", "--", "--", "--", "--", "--"],
-    ["--", "--", "--", "--", "--", "--", "--", "--"],
-    ["--", "--", "--", "--", "--", "--", "--", "--"],
-    ["bp", "--", "--", "--", "--", "--", "--", "--"],
-    ["wK", "--", "--", "--", "--", "--", "--", "--"]
-])
 
 c=Chess1()
-print("\nInitial Board (Black Pawn at (6, 0), White King at (7, 0)):")
-c.DisplayBoard()
-c.ExecuteMove(((6, 0), (7, 0)))  # Direct promotion to simulate testing
-print("\nBoard After White Pawn Promotion to Queen (Default):")
-c.DisplayBoard()
+c.state = board
+print(c.generate_possible_moves(("wK",(3,4))))
     
 
-# c.state=board
-# bestMove,score=c.GetBestMove(c.MAX)
-# print(bestMove,score)
-# c.ExecuteMove(bestMove)
-# c.DisplayBoard()
 
-'''
-c.state = np.array([
-    ["--", "--", "--", "--", "--", "--", "--", "--"],
-    ["--", "bp", "--", "--", "--", "--", "--", "--"],
-    ["--", "--", "--", "--", "--", "--", "--", "--"],
-    ["--", "--", "wp", "--", "--", "--", "--", "--"],
-    ["--", "--", "--", "--", "--", "--", "--", "--"],
-    ["--", "--", "--", "--", "--", "--", "--", "--"],
-    ["--", "--", "--", "--", "--", "--", "--", "--"],
-    ["--", "--", "--", "--", "--", "--", "--", "--"]
-])
-c.en_passant_square = (2, 1)
-print("Board before en passant:")
-c.DisplayBoard()
-white_pawn_moves = c.generate_possible_moves(("wp", (3, 2)))
-print("Possible moves for white pawn at (3, 2):", white_pawn_moves)
-if ((3, 2), (2, 1)) in white_pawn_moves:
-    print("\nPerforming en passant...")
-    c.ExecuteMove(((3, 2), (2, 1)))
-print("\nBoard after en passant:")
-c.DisplayBoard()
-'''
-'''
-def test_castling_rights_and_undo():
-    
-    chess_game = Chess1()
-    
-    print("Initial Board State:")
-    chess_game.DisplayBoard()
-    print("Initial Castling Rights:", chess_game.castling_rights)
-
-    
-    move = ((7, 4), (7, 6))  # Move white king from e1 to g1 (kingside castling position)
-    print("\nExecuting move:", move)
-
-    
-    captured_piece, castling_rights_before = chess_game.ExecuteMove(move)
-
-    print("\nBoard State After Move:")
-    chess_game.DisplayBoard()
-    print("Castling Rights After Move:", chess_game.castling_rights)
-
-    
-    chess_game.UndoMove((move[0], move[1], captured_piece, castling_rights_before))
-    print("\nBoard State After Undo:")
-    chess_game.DisplayBoard()
-    print("Castling Rights After Undo:", chess_game.castling_rights)
-
-
-test_castling_rights_and_undo()
-'''
 
