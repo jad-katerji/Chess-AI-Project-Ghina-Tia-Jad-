@@ -284,23 +284,80 @@ class Chess1:
         return False
 
 
+    def choose_promotion(self, color):
+        
+        queen = f"{color}Q"
+        knight = f"{color}N"
+        rook = f"{color}R"
+        bishop = f"{color}B"
+
+        # Promote to Knight if it can immediately deliver checkmate
+        if self.knight_checkmate_possible(color):
+            return knight
+
+        #Avoid promoting to Queen if it causes stalemate
+        if self.stalemate_possible_with_queen(color):
+            return knight  # Knight is often the safest fallback
+
+        # Otherwise, default to Queen
+        return queen
+    
+    def knight_checkmate_possible(self, color):
+        # Simulate promoting to a Knight and check if it results in checkmate.
+        opponent = 'w' if color == 'b' else 'b'
+        for i in range(8):
+            for j in range(8):
+                if self.state[i][j] == f"{color}p" and ((color == 'w' and i == 0) or (color == 'b' and i == 7)):
+                    # Temporarily promote to Knight
+                    self.state[i][j] = f"{color}N"
+                    if self.checkMate(opponent):
+                        self.state[i][j] = f"{color}p"  # Revert
+                        return True
+                    self.state[i][j] = f"{color}p"  # Revert
+        return False
+    
+    def stalemate_possible_with_queen(self, color):
+        opponent = 'w' if color == 'b' else 'b'
+        simulated_state = copy.deepcopy(self.state)
+        for i in range(8):
+            for j in range(8):
+                if simulated_state[i][j] == f"{color}p" and ((color == 'w' and i == 0) or (color == 'b' and i == 7)):
+                    # Simulate promoting to Queen
+                    simulated_state[i][j] = f"{color}Q"
+                    break
+
+        # Temporarily set the state to simulated and check for stalemate
+        original_state = self.state
+        self.state = simulated_state
+        stalemate = self.IsDraw()
+        self.state = original_state  # Restore original state
+        return stalemate
+
+
     def ExecuteMove(self, move): 
-        # move = ((oldx, oldy), (newx, newy))
+         # move = ((oldx, oldy), (newx, newy))
         start, end = move
         captured_piece = self.state[end[0]][end[1]]  # Store end state in case there is a captured piece
 
-        # Save the current castling rights
+        
         castling_rights_before = copy.deepcopy(self.castling_rights)
 
-    
         piece = self.state[start[0]][start[1]]
-        
+
+        # Handle en passant
         if piece[1] == "p":
             if abs(start[0] - end[0]) == 2:  # Pawn moves two squares
                 self.en_passant_square = ((start[0] + end[0]) // 2, start[1])
             else:
                 self.en_passant_square = None
-                
+
+            # Check for promotion
+            if (piece[0] == 'w' and end[0] == 0) or (piece[0] == 'b' and end[0] == 7):
+                promotion_piece = self.choose_promotion(piece[0])  # Choose promotion piece
+                self.state[end[0]][end[1]] = promotion_piece
+                self.state[start[0]][start[1]] = "--"
+                return captured_piece, castling_rights_before, self.ActualState
+
         if piece[1] == "K":
             if abs(start[1] - end[1]) == 2:  # Castling
                 if end[1] > start[1]:  # Kingside
@@ -310,11 +367,12 @@ class Chess1:
                     self.state[end[0]][3] = self.state[end[0]][0]
                     self.state[end[0]][0] = "--"
 
-        # Execute the move
+        
         self.state[end[0]][end[1]] = self.state[start[0]][start[1]]  
         self.state[start[0]][start[1]] = "--"
 
         return captured_piece, castling_rights_before, self.ActualState
+ 
 
  
 
@@ -348,6 +406,18 @@ class Chess1:
         print(self.ActualState)
         print("\n")
         
+        
+# for testing purposes
+#     def DisplayBoard(self):
+#         """
+#         Displays the current state of the chessboard in a readable format.
+#         """
+#         print("Expanded nodes:", self.nbExpandedNodes)
+#         print("\nBoard State:")
+#         for row in self.state:  
+#             print(" ".join(row))
+#         print("\n")
+    
         
     
     
@@ -635,21 +705,39 @@ class Chess1:
         return True
 
     
-board=np.array([["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
-        ["bp", "bp", "bp", "--", "bp", "bp", "bp", "bp"],
-        ["--", "--", "--", "--", "--", "--", "--", "--"],
-        ["--", "--", "--", "bp", "--", "--", "--", "--"],
-        ["--", "--", "--", "--", "--", "--", "--", "--"],
-        ["--", "--", "--", "--", "--", "--", "--", "--"],
-        ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
-        ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]])
-    
+# board=np.array([["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
+#         ["bp", "bp", "bp", "--", "bp", "bp", "bp", "bp"],
+#         ["--", "--", "--", "--", "--", "--", "--", "--"],
+#         ["--", "--", "--", "bp", "--", "--", "--", "--"],
+#         ["--", "--", "--", "--", "--", "--", "--", "--"],
+#         ["--", "--", "--", "--", "--", "--", "--", "--"],
+#         ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
+#         ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]])
+
+c.state = np.array([
+    ["--", "--", "--", "--", "--", "--", "--", "--"],
+    ["--", "--", "--", "--", "--", "--", "--", "--"],
+    ["--", "--", "--", "--", "--", "--", "--", "--"],
+    ["--", "--", "--", "--", "--", "--", "--", "--"],
+    ["--", "--", "--", "--", "--", "--", "--", "--"],
+    ["--", "--", "--", "--", "--", "--", "--", "--"],
+    ["bp", "--", "--", "--", "--", "--", "--", "--"],
+    ["wK", "--", "--", "--", "--", "--", "--", "--"]
+])
+
 c=Chess1()
-c.state=board
-bestMove,score=c.GetBestMove(c.MAX)
-print(bestMove,score)
-c.ExecuteMove(bestMove)
+print("\nInitial Board (Black Pawn at (6, 0), White King at (7, 0)):")
 c.DisplayBoard()
+c.ExecuteMove(((6, 0), (7, 0)))  # Direct promotion to simulate testing
+print("\nBoard After White Pawn Promotion to Queen (Default):")
+c.DisplayBoard()
+    
+
+# c.state=board
+# bestMove,score=c.GetBestMove(c.MAX)
+# print(bestMove,score)
+# c.ExecuteMove(bestMove)
+# c.DisplayBoard()
 
 '''
 c.state = np.array([
@@ -702,5 +790,4 @@ def test_castling_rights_and_undo():
 
 test_castling_rights_and_undo()
 '''
-
 
