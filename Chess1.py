@@ -359,16 +359,16 @@ class Chess1:
                     
                     # Castling moves
                     if piece[0] == "w" and self.castling_rights["wK"]:
-                        if self.state[7][5] == "--" and self.state[7][6] == "--" and not self.is_in_check("w", (7, 4), (7, 5), (7, 6)):
+                        if self.state[7][5] == "--" and self.state[7][6] == "--" and not (self.check("white", (7, 4)) or self.check("white", (7, 5)) or self.check("white", (7, 6))):
                             moves.append((piece[1], (7, 6)))  # Kingside
                     if piece[0] == "w" and self.castling_rights["wQ"]:
-                        if self.state[7][3] == "--" and self.state[7][2] == "--" and self.state[7][1] == "--" and not self.is_in_check("w", (7, 4), (7, 3), (7, 2)):
+                        if self.state[7][3] == "--" and self.state[7][2] == "--" and self.state[7][1] == "--" and not (self.check("white", (7, 4)) or self.check("white", (7, 3)) or self.check("white", (7, 2))):
                             moves.append((piece[1], (7, 2)))  # Queenside
                     if piece[0] == "b" and self.castling_rights["bK"]:
-                        if self.state[0][5] == "--" and self.state[0][6] == "--" and not self.is_in_check("b", (0, 4), (0, 5), (0, 6)):
+                        if self.state[0][5] == "--" and self.state[0][6] == "--" and not (self.check("black", (0, 4)) or self.check("black", (0, 5)) or self.check("black", (6, 6))):
                             moves.append((piece[1], (0, 6)))  # Kingside
                     if piece[0] == "b" and self.castling_rights["bQ"]:
-                        if self.state[0][3] == "--" and self.state[0][2] == "--" and self.state[0][1] == "--" and not self.is_in_check("b", (0, 4), (0, 3), (0, 2)):
+                        if self.state[0][3] == "--" and self.state[0][2] == "--" and self.state[0][1] == "--" and not (self.check("black", (0, 4)) or self.check("black", (0, 3)) or self.check("black", (6, 2))):
                             moves.append((piece[1], (0, 2)))  # Queenside
                 
                 else:  # pieces with iterative moves 
@@ -523,14 +523,14 @@ class Chess1:
                     return kingPosition
                 
     
-    def check(self,player):
+    def check(self,player,kingPosition):
         threats=[]
         if player==self.MAX:
             opponent=self.MIN
         else:
             opponent=self.MAX
         for piece in self.AvailablePieces(opponent):
-            if self.validMove(piece,self.kingPosition(player)):
+            if self.validMove(piece,kingPosition):
                 threats.append(piece)
         if threats:
             return threats
@@ -546,16 +546,16 @@ class Chess1:
         color=player[0]
         king=color+'K'
 
-        if self.check(player) and not self.generate_possible_moves((king,self.kingPosition(player))) and not self.canBlockCheck(player):
+        if self.check(player,self.kingPosition(player)) and not self.generate_possible_moves((king,self.kingPosition(player))) and not self.canBlockCheck(player):
             return True
         return False
     
     def canBlockCheck(self,player):
         protected=True
-        if self.check(player):
+        if self.check(player,self.kingPosition(player)):
             for move in self.GetNextPossibleMoves(player):
                 captured_piece,castling_rights=self.ExecuteMove(move)
-                if self.check(player):
+                if self.check(player,self.kingPosition(player)):
                     protected=False
                 else:
                     protected=True
