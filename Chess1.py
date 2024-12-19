@@ -344,39 +344,33 @@ class Chess1:
             
 
 #-------------------------------MiniMax no improvement-------------
-    def MiniMax(self,player,alpha,beta,depth,maxDepth):
+    def MiniMax(self,player,depth,maxDepth):
         self.nbExpandedNodes=self.nbExpandedNodes+1
         print(self.DisplayBoard())
         if self.GameOver() or maxDepth==depth:
             score = self.Evaluate(player)
             return score
         elif player==self.MAX:
-            return self.MaxValue(alpha,beta,depth+1,maxDepth)
+            return self.MaxValue(depth+1,maxDepth)
         else:
-            return self.MinValue(alpha,beta,depth+1,maxDepth)
+            return self.MinValue(depth+1,maxDepth)
         
-    def MaxValue(self,alpha,beta,depth,maxDepth):
+    def MaxValue(self,depth,maxDepth):
         v=-infinity
         for move in self.GetNextPossibleMoves(self.MAX):
             #print(self.DisplayBoard())
             captured_piece = self.ExecuteMove(move)
-            score=self.MiniMax(self.MIN,alpha,beta,depth,maxDepth)
+            score=self.MiniMax(self.MIN,depth,maxDepth)
             v=max(v,score)
-            alpha= max(alpha, v)
-            if beta <= alpha:
-                break
             self.UndoMove((move[0], move[1], captured_piece))
         return v
-    def MinValue(self,alpha,beta,depth,maxDepth):
+    def MinValue(self,depth,maxDepth):
         v=+infinity
         for move in self.GetNextPossibleMoves(self.MIN):
             #print(self.DisplayBoard())
             captured_piece = self.ExecuteMove(move)
-            score=self.MiniMax(self.MAX,alpha,beta,depth,maxDepth)
+            score=self.MiniMax(self.MAX,depth,maxDepth)
             v=min(v,score)
-            beta =min(beta,v)
-            if beta <= alpha:
-                break
             self.UndoMove((move[0],move[1],captured_piece))
         return v
     
@@ -388,12 +382,10 @@ class Chess1:
         if player==self.MIN:
             nextPlayer=self.MAX
             bestScore=+infinity
-        alpha=-infinity
-        beta=+infinity
         for move in self.GetNextPossibleMoves(player):
             captured_piece = self.ExecuteMove(move)
             self.DisplayBoard()
-            moveScore=self.MiniMax(nextPlayer,alpha,beta,0,5)
+            moveScore=self.MiniMax(nextPlayer,0,5)
             print('move analyzed')
             self.UndoMove((move[0],move[1],captured_piece))
             if player==self.MAX:
