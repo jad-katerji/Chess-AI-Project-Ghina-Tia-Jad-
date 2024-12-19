@@ -44,6 +44,7 @@ class Chess1:
         
         self.nbExpandedNodes=0
         self.castling_rights = {"wK": True, "wQ": True, "bK": True, "bQ": True}  # Kingside and Queenside
+        self.en_passant_square = None
         
     def Reset(self):
         self.state=copy.deepcopy(self.initState)
@@ -250,22 +251,23 @@ class Chess1:
         # Save the current castling rights
         castling_rights_before = copy.deepcopy(self.castling_rights)
 
-        # Update castling rights if king or rooks move
+    
         piece = self.state[start[0]][start[1]]
-        if piece == 'wK':
-            self.castling_rights['wK'] = False
-            self.castling_rights['wQ'] = False
-        elif piece == 'bK':
-            self.castling_rights['bK'] = False
-            self.castling_rights['bQ'] = False
-        elif piece == 'wR' and start == (7, 0):  # White queen-side rook
-            self.castling_rights['wQ'] = False
-        elif piece == 'wR' and start == (7, 7):  # White king-side rook
-            self.castling_rights['wK'] = False
-        elif piece == 'bR' and start == (0, 0):  # Black queen-side rook
-            self.castling_rights['bQ'] = False
-        elif piece == 'bR' and start == (0, 7):  # Black king-side rook
-            self.castling_rights['bK'] = False
+        
+        if piece[1] == "p":
+            if abs(start[0] - end[0]) == 2:  # Pawn moves two squares
+                self.en_passant_square = ((start[0] + end[0]) // 2, start[1])
+            else:
+                self.en_passant_square = None
+                
+        if piece[1] == "K":
+            if abs(start[1] - end[1]) == 2:  # Castling
+                if end[1] > start[1]:  # Kingside
+                    self.state[end[0]][5] = self.state[end[0]][7]
+                    self.state[end[0]][7] = "--"
+                else:  # Queenside
+                    self.state[end[0]][3] = self.state[end[0]][0]
+                    self.state[end[0]][0] = "--"
 
         # Execute the move
         self.state[end[0]][end[1]] = self.state[start[0]][start[1]]  
@@ -281,10 +283,19 @@ class Chess1:
         start, end, captured_piece, castling_rights_before = move
         
         
-        self.state[start[0]][start[1]] = self.state[end[0]][end[1]]  # Move piece back
-        self.state[end[0]][end[1]] = captured_piece  # Restore captured piece or empty square
-        
-        
+         # Undo castling
+        piece = self.state[end[0]][end[1]]
+        if piece[1] == "K" and abs(start[1] - end[1]) == 2:
+            if end[1] > start[1]:  # Kingside
+                self.state[end[0]][7] = self.state[end[0]][5]
+                self.state[end[0]][5] = "--"
+            else:  # Queenside
+                self.state[end[0]][0] = self.state[end[0]][3]
+                self.state[end[0]][3] = "--"
+
+        # Restore the captured piece and the moved piece
+        self.state[start[0]][start[1]] = self.state[end[0]][end[1]]
+        self.state[end[0]][end[1]] = captured_piece
         self.castling_rights = copy.deepcopy(castling_rights_before)
 
         return self.state
@@ -311,125 +322,139 @@ class Chess1:
                     if 'b' in self.state[i][j]: Pieces.append((self.state[i][j], (i,j)))
                     
         return Pieces
-        
+    
     def generate_possible_moves(self, piece): # piece = ("piece name", (x,y))
         moves = []
-        
-        
+
         if "w" in piece[0]:
-            key = piece[0][1] #gets a key for self.Actions 
+            key = piece[0][1]  # gets a key for self.Actions
             for move in self.Actions[key]:
-                dx,dy = move
-                x,y = piece[1]
-                
-                if key == 'p': #specefic cases for pawns
-                    if 0 <= x-1 < 8 and 0 <= y-1 < 8 and "b" in self.state[x-1][y-1] : # capture diagonally to the left
-                        moves.append((piece[1], (x-1,y-1)))
-                    elif 0 <= x-1 < 8 and 0 <= y+1 < 8 and "b" in self.state[x-1][y+1]: # capture diagonally to the right
-                        moves.append((piece[1], (x-1,y+1)))
-                    
-                    if(x == 6) and self.state[x - 2][y] == "--": # check if it's the pawn's first move and check if there are no pieces two sppaces infront of it
-                            moves.append((piece[1], (x-2,y)))
-                    
+                dx, dy = move
+                x, y = piece[1]
+
+                if key == 'p':  # specific cases for pawns
+                    if 0 <= x - 1 < 8 and 0 <= y - 1 < 8 and "b" in self.state[x - 1][y - 1]:  # capture diagonally to the left
+                        moves.append((piece[1], (x - 1, y - 1)))
+                    elif 0 <= x - 1 < 8 and 0 <= y + 1 < 8 and "b" in self.state[x - 1][y + 1]:  # capture diagonally to the right
+                        moves.append((piece[1], (x - 1, y + 1)))
+
+                    if (x == 6) and self.state[x - 2][y] == "--":  # check if it's the pawn's first move
+                        moves.append((piece[1], (x - 2, y)))
+
+                    # En passant
+                    if self.en_passant_square == (x - 1, y - 1):
+                        moves.append((piece[1], (x - 1, y - 1)))
+                    elif self.en_passant_square == (x - 1, y + 1):
+                        moves.append((piece[1], (x - 1, y + 1)))
+
                     x -= dx
                     y -= dy
-                    
-                    if 0 <= x < 8 and 0 <= y < 8: #to stay within bounds
-                        if self.state[x][y] == "--": #empty space
-                            moves.append((piece[1], (x,y)))
-                            
-                elif key == 'N' or key == 'K': # pieces with non-iterative moves
+
+                    if 0 <= x < 8 and 0 <= y < 8:  # to stay within bounds
+                        if self.state[x][y] == "--":  # empty space
+                            moves.append((piece[1], (x, y)))
+
+                elif key == 'N' or key == 'K':  # pieces with non-iterative moves
                     x -= dx
                     y -= dy
-                    
-                    if 0 <= x < 8 and 0 <= y < 8: #to stay within bounds
-                        if self.state[x][y] == "--": #empty space
-                            moves.append((piece[1], (x,y))) 
-                        elif "b" in self.state[x][y]: # capture
-                            moves.append((piece[1], (x,y)))
+
+                    if 0 <= x < 8 and 0 <= y < 8:  # to stay within bounds
+                        if self.state[x][y] == "--":  # empty space
+                            moves.append((piece[1], (x, y)))
+                        elif "b" in self.state[x][y]:  # capture
+                            moves.append((piece[1], (x, y)))
+
                 elif key == 'K':  # King movement
-                    x-=dx
-                    y-=dy
-                    if 0<=x<8 and 0<=y<8:
-                        if self.state[x][y]=="--":
-                            moves.append((piece[1],(x,y)))
+                    x -= dx
+                    y -= dy
+                    if 0 <= x < 8 and 0 <= y < 8:
+                        if self.state[x][y] == "--":
+                            moves.append((piece[1], (x, y)))
                         elif "b" in self.state[x][y]:
-                            moves.append((piece[1], (x,y)))
-                    
-                    
+                            moves.append((piece[1], (x, y)))
+
                     # Castling moves
-                    if piece[0] == "w" and self.castling_rights["wK"]:
+                    if self.castling_rights["wK"]:
                         if self.state[7][5] == "--" and self.state[7][6] == "--" and not (self.check("white", (7, 4)) or self.check("white", (7, 5)) or self.check("white", (7, 6))):
                             moves.append((piece[1], (7, 6)))  # Kingside
-                    if piece[0] == "w" and self.castling_rights["wQ"]:
+                    if self.castling_rights["wQ"]:
                         if self.state[7][3] == "--" and self.state[7][2] == "--" and self.state[7][1] == "--" and not (self.check("white", (7, 4)) or self.check("white", (7, 3)) or self.check("white", (7, 2))):
                             moves.append((piece[1], (7, 2)))  # Queenside
-                    if piece[0] == "b" and self.castling_rights["bK"]:
-                        if self.state[0][5] == "--" and self.state[0][6] == "--" and not (self.check("black", (0, 4)) or self.check("black", (0, 5)) or self.check("black", (6, 6))):
-                            moves.append((piece[1], (0, 6)))  # Kingside
-                    if piece[0] == "b" and self.castling_rights["bQ"]:
-                        if self.state[0][3] == "--" and self.state[0][2] == "--" and self.state[0][1] == "--" and not (self.check("black", (0, 4)) or self.check("black", (0, 3)) or self.check("black", (6, 2))):
-                            moves.append((piece[1], (0, 2)))  # Queenside
-                
-                else:  # pieces with iterative moves 
+
+                else:  # pieces with iterative moves
                     while True:
                         x -= dx
                         y -= dy
-                        
-                        if 0 <= x < 8 and 0 <= y < 8: #to stay within bounds
-                            if self.state[x][y] == "--": #empty space
-                                moves.append((piece[1], (x,y)))
-                            elif "b" in self.state[x][y]: # capture
-                                moves.append((piece[1], (x,y)))
-                            else: break # friendly piece
-                        else: break
-            return moves # move = ((oldx,oldy),(newx,newy))
-            
+
+                        if 0 <= x < 8 and 0 <= y < 8:  # to stay within bounds
+                            if self.state[x][y] == "--":  # empty space
+                                moves.append((piece[1], (x, y)))
+                            elif "b" in self.state[x][y]:  # capture
+                                moves.append((piece[1], (x, y)))
+                                break
+                            else:
+                                break  # friendly piece
+                        else:
+                            break
+
+            return moves  # move = ((oldx, oldy), (newx, newy))
+
         if "b" in piece[0]:
-            key = piece[0][1] #gets a key for self.Actions 
+            key = piece[0][1]  # gets a key for self.Actions
             for move in self.Actions[key]:
-                dx,dy = move
-                x,y = piece[1]
-                
-                if key == 'p': #specefic cases for pawns
-                    if 0 <= x+1 < 8 and 0 <= y-1 < 8 and "w" in self.state[x+1][y-1]: # capture diagonally to the left
-                        moves.append((piece[1], (x+1,y-1)))
-                    elif 0 <= x+1 < 8 and 0 <= y+1 < 8 and "w" in self.state[x+1][y+1] : # capture diagonally to the right
-                        moves.append((piece[1], (x+1,y+1)))
-                    
-                    if(x == 1) and self.state[x + 2][y] == "--": # check if it's the pawn's first move and check if there are no pieces two sppaces infront of it
-                            moves.append((piece[1], (x+2,y)))
-                    
+                dx, dy = move
+                x, y = piece[1]
+
+                if key == 'p':  # specific cases for pawns
+                    if 0 <= x + 1 < 8 and 0 <= y - 1 < 8 and "w" in self.state[x + 1][y - 1]:  # capture diagonally to the left
+                        moves.append((piece[1], (x + 1, y - 1)))
+                    elif 0 <= x + 1 < 8 and 0 <= y + 1 < 8 and "w" in self.state[x + 1][y + 1]:  # capture diagonally to the right
+                        moves.append((piece[1], (x + 1, y + 1)))
+
+                    if (x == 1) and self.state[x + 2][y] == "--":  # check if it's the pawn's first move
+                        moves.append((piece[1], (x + 2, y)))
+
+                    # En passant
+                    if self.en_passant_square == (x + 1, y - 1):
+                        moves.append((piece[1], (x + 1, y - 1)))
+                    elif self.en_passant_square == (x + 1, y + 1):
+                        moves.append((piece[1], (x + 1, y + 1)))
+
                     x += dx
                     y += dy
-                    
-                    if 0 <= x < 8 and 0 <= y < 8: #to stay within bounds
-                        if self.state[x][y] == "--": #empty space
-                            moves.append((piece[1], (x,y)))
-                            
-                elif key == 'N' or key == 'K': # pieces with non-iterative moves
+
+                    if 0 <= x < 8 and 0 <= y < 8:  # to stay within bounds
+                        if self.state[x][y] == "--":  # empty space
+                            moves.append((piece[1], (x, y)))
+
+                elif key == 'N' or key == 'K':  # pieces with non-iterative moves
                     x += dx
                     y += dy
-                    
-                    if 0 <= x < 8 and 0 <= y < 8: #to stay within bounds
-                        if self.state[x][y] == "--": #empty space
-                            moves.append((piece[1], (x,y)))
-                        elif "w" in self.state[x][y]: # capture
-                            moves.append((piece[1], (x,y)))
-                
-                else:  # pieces with iterative moves 
+
+                    if 0 <= x < 8 and 0 <= y < 8:  # to stay within bounds
+                        if self.state[x][y] == "--":  # empty space
+                            moves.append((piece[1], (x, y)))
+                        elif "w" in self.state[x][y]:  # capture
+                            moves.append((piece[1], (x, y)))
+
+                else:  # pieces with iterative moves
                     while True:
                         x += dx
                         y += dy
-                        
-                        if 0 <= x < 8 and 0 <= y < 8: #to stay within bounds
-                            if self.state[x][y] == "--": #empty space
-                                moves.append((piece[1], (x,y)))
-                            elif "w" in self.state[x][y]: # capture
-                                moves.append((piece[1], (x,y)))
-                            else: break # friendly piece
-                        else: break
-            return moves # move = ((oldx,oldy),(newx,newy))
+
+                        if 0 <= x < 8 and 0 <= y < 8:  # to stay within bounds
+                            if self.state[x][y] == "--":  # empty space
+                                moves.append((piece[1], (x, y)))
+                            elif "w" in self.state[x][y]:  # capture
+                                moves.append((piece[1], (x, y)))
+                                break
+                            else:
+                                break  # friendly piece
+                        else:
+                            break
+
+            return moves  # move = ((oldx, oldy), (newx, newy))
+
             
             
 
@@ -577,9 +602,31 @@ board=np.array([["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
         ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]])
     
 c=Chess1()
-c.state=board
-print(c.GetBestMove(c.MAX))
+# c.state=board
+# print(c.GetBestMove(c.MAX))
 
+'''
+c.state = np.array([
+    ["--", "--", "--", "--", "--", "--", "--", "--"],
+    ["--", "bp", "--", "--", "--", "--", "--", "--"],
+    ["--", "--", "--", "--", "--", "--", "--", "--"],
+    ["--", "--", "wp", "--", "--", "--", "--", "--"],
+    ["--", "--", "--", "--", "--", "--", "--", "--"],
+    ["--", "--", "--", "--", "--", "--", "--", "--"],
+    ["--", "--", "--", "--", "--", "--", "--", "--"],
+    ["--", "--", "--", "--", "--", "--", "--", "--"]
+])
+c.en_passant_square = (2, 1)
+print("Board before en passant:")
+c.DisplayBoard()
+white_pawn_moves = c.generate_possible_moves(("wp", (3, 2)))
+print("Possible moves for white pawn at (3, 2):", white_pawn_moves)
+if ((3, 2), (2, 1)) in white_pawn_moves:
+    print("\nPerforming en passant...")
+    c.ExecuteMove(((3, 2), (2, 1)))
+print("\nBoard after en passant:")
+c.DisplayBoard()
+'''
 '''
 def test_castling_rights_and_undo():
     
@@ -609,3 +656,5 @@ def test_castling_rights_and_undo():
 
 test_castling_rights_and_undo()
 '''
+
+
