@@ -15,7 +15,7 @@ class Chess1:
         self.MIN = "black"
         
         #define a dictionairy "Actions" to contain the actions of each piece
-        self.Actions ={ "p" : [(1,0), (1,1), (1,-1)],
+        self.Actions ={ "p" : [(1,0)],
                         "R" : [(1,0), (-1,0), (0,1), (0,-1)],
                         "N" : [(2,1), (1,2), (-2,1), (1,-2), (2,-1), (-1,2), (-2,-1), (-1,-2)],
                         "B" : [(1,1),(-1,1),(1,-1), (-1,-1)],
@@ -287,7 +287,23 @@ class Chess1:
                 dx,dy = move
                 x,y = piece[1]
                 
-                if key == 'p' or key == 'N' or key == 'K': # pieces with non-iterative moves
+                if key == 'p': #specefic cases for pawns
+                    if 0 <= x-1 < 8 and 0 <= y-1 < 8 and "b" in self.state[x-1][y-1] : # capture diagonally to the left
+                        moves.append((piece[1], (x-1,y-1)))
+                    elif 0 <= x-1 < 8 and 0 <= y+1 < 8 and "b" in self.state[x-1][y+1]: # capture diagonally to the right
+                        moves.append((piece[1], (x-1,y+1)))
+                    
+                    if(x == 6) and self.state[x - 2][y] == "--": # check if it's the pawn's first move and check if there are no pieces two sppaces infront of it
+                            moves.append((piece[1], (x-2,y)))
+                    
+                    x -= dx
+                    y -= dy
+                    
+                    if 0 <= x < 8 and 0 <= y < 8: #to stay within bounds
+                        if self.state[x][y] == "--": #empty space
+                            moves.append((piece[1], (x,y)))
+                            
+                elif key == 'N' or key == 'K': # pieces with non-iterative moves
                     x -= dx
                     y -= dy
                     
@@ -317,7 +333,23 @@ class Chess1:
                 dx,dy = move
                 x,y = piece[1]
                 
-                if key == 'p' or key == 'N' or key == 'K': # pieces with non-iterative moves
+                if key == 'p': #specefic cases for pawns
+                    if 0 <= x+1 < 8 and 0 <= y-1 < 8 and "w" in self.state[x+1][y-1]: # capture diagonally to the left
+                        moves.append((piece[1], (x+1,y-1)))
+                    elif 0 <= x+1 < 8 and 0 <= y+1 < 8 and "w" in self.state[x+1][y+1] : # capture diagonally to the right
+                        moves.append((piece[1], (x+1,y+1)))
+                    
+                    if(x == 1) and self.state[x + 2][y] == "--": # check if it's the pawn's first move and check if there are no pieces two sppaces infront of it
+                            moves.append((piece[1], (x+2,y)))
+                    
+                    x += dx
+                    y += dy
+                    
+                    if 0 <= x < 8 and 0 <= y < 8: #to stay within bounds
+                        if self.state[x][y] == "--": #empty space
+                            moves.append((piece[1], (x,y)))
+                            
+                elif key == 'N' or key == 'K': # pieces with non-iterative moves
                     x += dx
                     y += dy
                     
@@ -488,7 +520,7 @@ board=np.array([["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
     
 c=Chess1()
 c.state=board
-print(c.GetBestMove(c.MAX))
+print(c.GetNextPossibleMoves(c.MAX))
 
         
     
