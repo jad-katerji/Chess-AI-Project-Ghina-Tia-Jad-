@@ -449,25 +449,25 @@ class Chess1:
         v=-infinity
         for move in self.GetNextPossibleMoves(self.MAX):
             #print(self.DisplayBoard())
-            captured_piece = self.ExecuteMove(move)
+            captured_piece,castling_rights = self.ExecuteMove(move)
             score=self.MiniMax(self.MIN,alpha,beta,depth,maxDepth)
             v=max(v,score)
             alpha= max(alpha, v)
             if beta <= alpha:
                 break
-            self.UndoMove((move[0], move[1], captured_piece))
+            self.UndoMove((move[0], move[1], captured_piece,castling_rights))
         return v
     def MinValue(self,alpha,beta,depth,maxDepth):
         v=+infinity
         for move in self.GetNextPossibleMoves(self.MIN):
             #print(self.DisplayBoard())
-            captured_piece = self.ExecuteMove(move)
+            captured_piece,castling_rights = self.ExecuteMove(move)
             score=self.MiniMax(self.MAX,alpha,beta,depth,maxDepth)
             v=min(v,score)
             beta =min(beta,v)
             if beta <= alpha:
                 break
-            self.UndoMove((move[0],move[1],captured_piece))
+            self.UndoMove((move[0],move[1],captured_piece,castling_rights))
         return v
     
     def GetBestMove(self,player):
@@ -481,11 +481,11 @@ class Chess1:
         alpha=-infinity
         beta=+infinity
         for move in self.GetNextPossibleMoves(player):
-            captured_piece = self.ExecuteMove(move)
+            captured_piece,castling_rights = self.ExecuteMove(move)
             self.DisplayBoard()
             moveScore=self.MiniMax(nextPlayer,alpha,beta,0,5)
             print('move analyzed')
-            self.UndoMove((move[0],move[1],captured_piece))
+            self.UndoMove((move[0],move[1],captured_piece,castling_rights))
             if player==self.MAX:
                 if moveScore>bestScore:
                     bestMove=move
@@ -554,12 +554,12 @@ class Chess1:
         protected=True
         if self.check(player):
             for move in self.GetNextPossibleMoves(player):
-                capturedPiece=self.ExecuteMove(move)
+                captured_piece,castling_rights=self.ExecuteMove(move)
                 if self.check(player):
                     protected=False
                 else:
                     protected=True
-                self.UndoMove((move[0],move[1],capturedPiece))
+                self.UndoMove((move[0],move[1],captured_piece,castling_rights))
 
                 if protected:
                     return True
@@ -578,7 +578,7 @@ board=np.array([["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
     
 c=Chess1()
 c.state=board
-print(c.GetNextPossibleMoves(c.MAX))
+print(c.GetBestMove(c.MAX))
 
 '''
 def test_castling_rights_and_undo():
