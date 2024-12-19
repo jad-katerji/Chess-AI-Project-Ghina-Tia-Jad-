@@ -62,7 +62,18 @@ class Chess1:
 
     def Evaluate(self, player):
         # Piece values and piece-square tables
-        #print('evaluate')
+        # print('evaluate')
+        check_score=0
+        if player==self.MAX:
+            sign=1
+        else:
+            sign=-1
+
+        if self.check(player,self.kingPosition(player)):
+            check_score += sign*-100
+        if self.checkMate(player):
+            check_score += sign*-100
+
         piece_values = {'p': 1, 'R': 5, 'N': 3, 'B': 3, 'Q': 9, 'K': 0}
         pawn_table = [
             [0, 0, 0, 0, 0, 0, 0, 0],
@@ -74,6 +85,16 @@ class Chess1:
             [0.5, 1, 1, -2, -2, 1, 1, 0.5],
             [0, 0, 0, 0, 0, 0, 0, 0]
         ]
+        # pawn_table_black = [
+        #     [0, 0, 0, 0, 0, 0, 0, 0],
+        #     [0.5, 1, 1, -2, -2, 1, 1, 0.5],
+        #     [0.5, -0.5, -1, 0, 0, -1, -0.5, 0.5],
+        #     [0, 0, 0, 2, 2, 0, 0, 0],
+        #     [0.5, 0.5, 1, 2.5, 2.5, 1, 0.5, 0.5],
+        #     [1, 1, 2, 3, 3, 2, 1, 1],
+        #     [5, 5, 5, 5, 5, 5, 5, 5],
+        #     [0, 0, 0, 0, 0, 0, 0, 0]
+        # ]
         knight_table = [
             [-5, -4, -3, -3, -3, -3, -4, -5],
             [-4, -2, 0, 0, 0, 0, -2, -4],
@@ -84,10 +105,28 @@ class Chess1:
             [-4, -2, 0, 0.5, 0.5, 0, -2, -4],
             [-5, -4, -3, -3, -3, -3, -4, -5]
         ]
+        # knight_table_black = [
+        #     [-5, -4, -3, -3, -3, -3, -4, -5],
+        #     [-4, -2, 0, 0.5, 0.5, 0, -2, -4],
+        #     [-3, 0.5, 1, 1.5, 1.5, 1, 0.5, -3],
+        #     [-3, 0, 1.5, 2, 2, 1.5, 0, -3],
+        #     [-3, 0.5, 1.5, 2, 2, 1.5, 0.5, -3],
+        #     [-3, 0, 1, 1.5, 1.5, 1, 0, -3],
+        #     [-4, -2, 0, 0, 0, 0, -2, -4],
+        #     [-5, -4, -3, -3, -3, -3, -4, -5]
+        # ]
 
         # Player and opponent
-        player_color = 'w' if player == self.MAX else 'b'
-        opponent_color = 'b' if player == self.MAX else 'w'
+        if player == self.MAX:
+            player_color = 'w'
+            opponent_color = 'b'
+            # pawn_table=pawn_table_white
+            # knight_table=knight_table_white 
+        else:
+            player_color = 'b' 
+            opponent_color = 'w'
+            # pawn_table=pawn_table_black
+            # knight_table=knight_table_black
 
         # Material and positional evaluation
         material_score = 0
@@ -145,7 +184,7 @@ class Chess1:
             endgame_score += self.evaluate_endgame(player_color, opponent_color)
 
         # Final evaluation
-        total_score = material_score + positional_score + king_safety_score + pawn_structure_score + mobility_score + endgame_score
+        total_score = material_score + positional_score + king_safety_score + pawn_structure_score + mobility_score + endgame_score + check_score
         return total_score
 
 
@@ -606,8 +645,11 @@ board=np.array([["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
         ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]])
     
 c=Chess1()
-# c.state=board
-# print(c.GetBestMove(c.MAX))
+c.state=board
+bestMove,score=c.GetBestMove(c.MAX)
+print(bestMove,score)
+c.ExecuteMove(bestMove)
+c.DisplayBoard()
 
 '''
 c.state = np.array([
