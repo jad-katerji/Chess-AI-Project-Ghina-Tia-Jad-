@@ -465,7 +465,7 @@ class Chess1:
                         if self.state[x][y] == "--":  # empty space
                             moves.append((piece[1], (x, y)))
 
-                elif key == 'N' or key == 'K':  # pieces with non-iterative moves
+                elif key == 'N':  # pieces with non-iterative moves
                     x -= dx
                     y -= dy
 
@@ -538,7 +538,7 @@ class Chess1:
                         if self.state[x][y] == "--":  # empty space
                             moves.append((piece[1], (x, y)))
 
-                elif key == 'N' or key == 'K':  # pieces with non-iterative moves
+                elif key == 'N':  # pieces with non-iterative moves
                     x += dx
                     y += dy
 
@@ -547,6 +547,23 @@ class Chess1:
                             moves.append((piece[1], (x, y)))
                         elif "w" in self.state[x][y]:  # capture
                             moves.append((piece[1], (x, y)))
+
+                elif key == 'K':
+                    x += dx
+                    y += dy
+
+                    if 0 <= x < 8 and 0 <= y < 8:  # to stay within bounds
+                        if self.state[x][y] == "--":  # empty space
+                            moves.append((piece[1], (x, y)))
+                        elif "w" in self.state[x][y]:  # capture
+                            moves.append((piece[1], (x, y)))
+                            
+                    if piece[0] == "b" and self.castling_rights["bK"]:
+                        if self.state[0][5] == "--" and self.state[0][6] == "--" and not (self.check("black", (0, 4)) or self.check("black", (0, 5)) or self.check("black", (6, 6))):
+                            moves.append((piece[1], (0, 6)))  # Kingside
+                    if piece[0] == "b" and self.castling_rights["bQ"]:
+                        if self.state[0][3] == "--" and self.state[0][2] == "--" and self.state[0][1] == "--" and not (self.check("black", (0, 4)) or self.check("black", (0, 3)) or self.check("black", (6, 2))):
+                            moves.append((piece[1], (0, 2)))  # Queenside
 
                 else:  # pieces with iterative moves
                     while True:
