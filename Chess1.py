@@ -43,6 +43,7 @@ class Chess1:
                         ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]]
         
         self.nbExpandedNodes=0
+        self.castling_rights = {"wK": True, "wQ": True, "bK": True, "bQ": True}  # Kingside and Queenside
         
     def Reset(self):
         self.state=copy.deepcopy(self.initState)
@@ -241,19 +242,53 @@ class Chess1:
         return False
 
 
-    def ExecuteMove(self, move): # move = ((oldx,oldy),(newx,newy))
+    def ExecuteMove(self, move): 
+        # move = ((oldx, oldy), (newx, newy))
         start, end = move
         captured_piece = self.state[end[0]][end[1]]  # Store end state in case there is a captured piece
+
+        # Save the current castling rights
+        castling_rights_before = copy.deepcopy(self.castling_rights)
+
+        # Update castling rights if king or rooks move
+        piece = self.state[start[0]][start[1]]
+        if piece == 'wK':
+            self.castling_rights['wK'] = False
+            self.castling_rights['wQ'] = False
+        elif piece == 'bK':
+            self.castling_rights['bK'] = False
+            self.castling_rights['bQ'] = False
+        elif piece == 'wR' and start == (7, 0):  # White queen-side rook
+            self.castling_rights['wQ'] = False
+        elif piece == 'wR' and start == (7, 7):  # White king-side rook
+            self.castling_rights['wK'] = False
+        elif piece == 'bR' and start == (0, 0):  # Black queen-side rook
+            self.castling_rights['bQ'] = False
+        elif piece == 'bR' and start == (0, 7):  # Black king-side rook
+            self.castling_rights['bK'] = False
+
+        # Execute the move
         self.state[end[0]][end[1]] = self.state[start[0]][start[1]]  
-        self.state[start[0]][start[1]] = "--"  
-        return captured_piece  # Return captured piece for undo 
+        self.state[start[0]][start[1]] = "--"
+
+        return captured_piece, castling_rights_before
+
+ 
 
 
-    def UndoMove(self, move): # move = ((oldx,oldy),(newx,newy), captured_piece)
-        start, end, captured_piece = move
+    def UndoMove(self, move): 
+        # move = ((oldx, oldy), (newx, newy), captured_piece, castling_rights_before)
+        start, end, captured_piece, castling_rights_before = move
+        
+        
         self.state[start[0]][start[1]] = self.state[end[0]][end[1]]  # Move piece back
         self.state[end[0]][end[1]] = captured_piece  # Restore captured piece or empty square
+        
+        
+        self.castling_rights = copy.deepcopy(castling_rights_before)
+
         return self.state
+
     
 
     def DisplayBoard(self):
@@ -312,6 +347,29 @@ class Chess1:
                             moves.append((piece[1], (x,y))) 
                         elif "b" in self.state[x][y]: # capture
                             moves.append((piece[1], (x,y)))
+                elif key == 'K':  # King movement
+                    x-=dx
+                    y-=dy
+                    if 0<=x<8 and 0<=y<8:
+                        if self.state[x][y]=="--":
+                            moves.append((piece[1],(x,y)))
+                        elif "b" in self.state[x][y]:
+                            moves.append((piece[1], (x,y)))
+                    
+                    
+                    # Castling moves
+                    if piece[0] == "w" and self.castling_rights["wK"]:
+                        if self.state[7][5] == "--" and self.state[7][6] == "--" and not self.is_in_check("w", (7, 4), (7, 5), (7, 6)):
+                            moves.append((piece[1], (7, 6)))  # Kingside
+                    if piece[0] == "w" and self.castling_rights["wQ"]:
+                        if self.state[7][3] == "--" and self.state[7][2] == "--" and self.state[7][1] == "--" and not self.is_in_check("w", (7, 4), (7, 3), (7, 2)):
+                            moves.append((piece[1], (7, 2)))  # Queenside
+                    if piece[0] == "b" and self.castling_rights["bK"]:
+                        if self.state[0][5] == "--" and self.state[0][6] == "--" and not self.is_in_check("b", (0, 4), (0, 5), (0, 6)):
+                            moves.append((piece[1], (0, 6)))  # Kingside
+                    if piece[0] == "b" and self.castling_rights["bQ"]:
+                        if self.state[0][3] == "--" and self.state[0][2] == "--" and self.state[0][1] == "--" and not self.is_in_check("b", (0, 4), (0, 3), (0, 2)):
+                            moves.append((piece[1], (0, 2)))  # Queenside
                 
                 else:  # pieces with iterative moves 
                     while True:
@@ -522,9 +580,32 @@ c=Chess1()
 c.state=board
 print(c.GetNextPossibleMoves(c.MAX))
 
-        
+'''
+def test_castling_rights_and_undo():
     
+    chess_game = Chess1()
+    
+    print("Initial Board State:")
+    chess_game.DisplayBoard()
+    print("Initial Castling Rights:", chess_game.castling_rights)
+
+    
+    move = ((7, 4), (7, 6))  # Move white king from e1 to g1 (kingside castling position)
+    print("\nExecuting move:", move)
+
+    
+    captured_piece, castling_rights_before = chess_game.ExecuteMove(move)
+
+    print("\nBoard State After Move:")
+    chess_game.DisplayBoard()
+    print("Castling Rights After Move:", chess_game.castling_rights)
+
+    
+    chess_game.UndoMove((move[0], move[1], captured_piece, castling_rights_before))
+    print("\nBoard State After Undo:")
+    chess_game.DisplayBoard()
+    print("Castling Rights After Undo:", chess_game.castling_rights)
 
 
-
-
+test_castling_rights_and_undo()
+'''
