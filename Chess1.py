@@ -3,6 +3,8 @@ import numpy as np
 from math import inf as infinity
 import time
 import copy
+import multiprocessing
+
 
 class Chess1:
     
@@ -56,6 +58,7 @@ class Chess1:
 
     def Evaluate(self, player):
         # Piece values and piece-square tables
+        print('evaluate')
         piece_values = {'p': 1, 'R': 5, 'N': 3, 'B': 3, 'Q': 9, 'K': 0}
         pawn_table = [
             [0, 0, 0, 0, 0, 0, 0, 0],
@@ -341,40 +344,39 @@ class Chess1:
             
 
 #-------------------------------MiniMax no improvement-------------
-    def MiniMax(self,player,alpha,beta):
+    def MiniMax(self,player,alpha,beta,depth,maxDepth):
         self.nbExpandedNodes=self.nbExpandedNodes+1
-        depth=5
-        if self.GameOver() or self.nbExpandedNodes==depth:
+        print(self.DisplayBoard())
+        if self.GameOver() or maxDepth==depth:
             score = self.Evaluate(player)
-            self.nbExpandedNodes=0
             return score
         elif player==self.MAX:
-            return self.MaxValue(alpha,beta)
+            return self.MaxValue(alpha,beta,depth+1,maxDepth)
         else:
-            return self.MinValue(alpha,beta)
+            return self.MinValue(alpha,beta,depth+1,maxDepth)
         
-    def MaxValue(self,alpha,beta):
+    def MaxValue(self,alpha,beta,depth,maxDepth):
         v=-infinity
         for move in self.GetNextPossibleMoves(self.MAX):
-            self.DisplayBoard()
+            #print(self.DisplayBoard())
             captured_piece = self.ExecuteMove(move)
-            score=self.MiniMax(self.MIN,alpha,beta)
+            score=self.MiniMax(self.MIN,alpha,beta,depth,maxDepth)
             v=max(v,score)
-            if v >= beta:
-                return v
             alpha= max(alpha, v)
+            if beta <= alpha:
+                break
             self.UndoMove((move[0], move[1], captured_piece))
         return v
-    def MinValue(self,alpha,beta):
+    def MinValue(self,alpha,beta,depth,maxDepth):
         v=+infinity
         for move in self.GetNextPossibleMoves(self.MIN):
-            self.DisplayBoard()
+            #print(self.DisplayBoard())
             captured_piece = self.ExecuteMove(move)
-            score=self.MiniMax(self.MAX,alpha,beta)
+            score=self.MiniMax(self.MAX,alpha,beta,depth,maxDepth)
             v=min(v,score)
-            if v<=alpha:
-                return v
             beta =min(beta,v)
+            if beta <= alpha:
+                break
             self.UndoMove((move[0],move[1],captured_piece))
         return v
     
@@ -391,7 +393,8 @@ class Chess1:
         for move in self.GetNextPossibleMoves(player):
             captured_piece = self.ExecuteMove(move)
             self.DisplayBoard()
-            moveScore=self.MiniMax(nextPlayer,alpha,beta)
+            moveScore=self.MiniMax(nextPlayer,alpha,beta,0,5)
+            print('move analyzed')
             self.UndoMove((move[0],move[1],captured_piece))
             if player==self.MAX:
                 if moveScore>bestScore:
@@ -473,9 +476,20 @@ class Chess1:
             return False
         return True
 
+    
+board=[["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
+        ["bp", "bp", "bp", "--", "bp", "bp", "bp", "bp"],
+        ["--", "--", "--", "--", "--", "--", "--", "--"],
+        ["--", "--", "--", "bp", "--", "--", "--", "--"],
+        ["--", "--", "--", "--", "--", "--", "--", "--"],
+        ["--", "--", "--", "--", "--", "--", "--", "--"],
+        ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
+        ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]]
+    
+c=Chess1()
+c.state=board
+print(c.GetBestMove(c.MAX))
 
-    
-    
         
     
 
