@@ -339,7 +339,7 @@ class Chess1:
                     elif 0 <= x+1 < 8 and 0 <= y+1 < 8 and "w" in self.state[x+1][y+1] : # capture diagonally to the right
                         moves.append((piece[1], (x+1,y+1)))
                     
-                    if(x == 6) and self.state[x + 2][y] == "--": # check if it's the pawn's first move and check if there are no pieces two sppaces infront of it
+                    if(x == 1) and self.state[x + 2][y] == "--": # check if it's the pawn's first move and check if there are no pieces two sppaces infront of it
                             moves.append((piece[1], (x+2,y)))
                     
                     x += dx
@@ -349,7 +349,7 @@ class Chess1:
                         if self.state[x][y] == "--": #empty space
                             moves.append((piece[1], (x,y)))
                             
-                if key == 'N' or key == 'K': # pieces with non-iterative moves
+                elif key == 'N' or key == 'K': # pieces with non-iterative moves
                     x += dx
                     y += dy
                     
@@ -378,9 +378,12 @@ class Chess1:
 #-------------------------------MiniMax no improvement-------------
     def MiniMax(self,player,depth,maxDepth):
         self.nbExpandedNodes=self.nbExpandedNodes+1
-        #self.DisplayBoard()
+        self.DisplayBoard()
         print(f"depth: {depth}")
-        if self.GameOver() or maxDepth==depth:
+        if self.GameOver() or depth==maxDepth:  
+            # print(f"I won: {self.IsGameWon(self.MAX)} opponent won: {self.IsGameWon(self.MIN)} draw: {self.IsDraw()}")
+            # print(f"checkmate: {self.checkMate(self.MAX)}")
+            # print(f"check: {self.check(self.MAX)}, can block checks: {self.canBlockCheck(self.MAX)}")
             score = self.Evaluate(player)
             print(score)
             return score
@@ -418,8 +421,10 @@ class Chess1:
             bestScore=+infinity
         for move in self.GetNextPossibleMoves(player):
             captured_piece = self.ExecuteMove(move)
-            self.DisplayBoard()
-            moveScore=self.MiniMax(nextPlayer,0,5)
+            #self.DisplayBoard()
+            moveScore=self.MiniMax(nextPlayer,0,2)
+            if(self.nbExpandedNodes>=100):
+                break
             print('move analyzed')
             self.UndoMove((move[0],move[1],captured_piece))
             if player==self.MAX:
@@ -456,6 +461,7 @@ class Chess1:
             for j in range(len(self.state[i])):
                 if self.state[i][j]==king:
                     kingPosition=(i,j)
+                    #print(f'king position: {kingPosition}')
                     return kingPosition
                 
     
@@ -514,7 +520,9 @@ board=np.array([["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
     
 c=Chess1()
 c.state=board
-print(c.GetNextPossibleMoves(c.MAX))
+print(c.GetBestMove(c.MAX))
+#print(c.generate_possible_moves(('bp', (1, 4))))
+
 
         
     
