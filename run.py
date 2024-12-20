@@ -47,7 +47,7 @@ while (not agent1.GameOver()) or (not agent2.GameOver()):
     agent1Turn=not agent1Turn
     time.sleep(4)
     if staleMate==0:
-        break;
+        break
     
 if agent2.IsGameWon(agent2.MAX):
     print("Agent 1 won")
