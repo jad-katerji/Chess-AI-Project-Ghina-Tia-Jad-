@@ -649,7 +649,7 @@ class Chess2:
         for move in self.GetNextPossibleMoves(player):
             captured_piece,castling_rights = self.ExecuteMove(move)[:2]
             #self.DisplayBoard()
-            moveScore=self.MiniMax(nextPlayer,alpha,beta,0,2)
+            moveScore=self.MiniMax(nextPlayer,alpha,beta,0,1)
             #print('move analyzed')
             self.UndoMove((move[0],move[1],captured_piece,castling_rights))
             if player==self.MAX:

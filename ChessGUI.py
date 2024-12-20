@@ -42,7 +42,7 @@ class GUI:
         for row in range(8):
             for col in range(8):
                 piece = board[row][col]
-                if piece != "--":
+                if piece != "--" :
                     piece_image = self.PIECE_IMAGES[piece]
                     piece_image = pygame.transform.scale(piece_image, (self.SQUARE_SIZE, self.SQUARE_SIZE))
                     self.screen.blit(piece_image, (col * self.SQUARE_SIZE, row * self.SQUARE_SIZE))

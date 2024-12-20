@@ -32,7 +32,7 @@ while (not agent1.GameOver()) or (not agent2.GameOver()):
         bestMove,score=agent1.GetBestMove(agent1.MAX)
         if bestMove:
             print("Best Move: for ",agent1.MAX," ",bestMove," with score", score)
-            GameState=agent1.ExecuteMove(bestMove)[2]
+            GameState=agent1.ExecuteMove(bestMove)[2] #Only change done to this file was here due to our ExecuteMove() function
         else:
             print("no moves available.")
             staleMate=staleMate-1
@@ -44,7 +44,7 @@ while (not agent1.GameOver()) or (not agent2.GameOver()):
         bestMove,score=agent2.GetBestMove(agent2.MAX)
         if bestMove:
             print("Best Move: for ",agent2.MAX," ",bestMove," with score", score)
-            GameState=agent1.ExecuteMove(bestMove)[2]          
+            GameState=agent2.ExecuteMove(bestMove)[2]    #Only change done to this file was here due to our ExecuteMove() function    
         else:
             print("no moves available.")
             staleMate=staleMate-1
@@ -59,7 +59,7 @@ while (not agent1.GameOver()) or (not agent2.GameOver()):
 pygame.quit()
 if agent2.IsGameWon(agent2.MAX):
     print("Agent 1 won")
-elif agent2.IsGameWon(agent2.MAX):
+elif agent1.IsGameWon(agent2.MAX):
     print("Agent 2 won")
 else:
     print("Game Over, Draw")
