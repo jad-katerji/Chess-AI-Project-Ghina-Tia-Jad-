@@ -27,8 +27,7 @@ while (not agent1.GameOver()) or (not agent2.GameOver()):
         bestMove,score=agent1.GetBestMove(agent1.MAX)
         if bestMove:
             print("Best Move: for ",agent1.MAX," ",bestMove," with score", score)
-            GameState=agent1.ExecuteMove(bestMove)[2]
-            print(GameState)
+            GameState=agent1.ExecuteMove(bestMove)
         else:
             print("no moves available.")
             staleMate=staleMate-1

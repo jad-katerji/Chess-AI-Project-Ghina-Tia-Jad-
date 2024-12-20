@@ -116,13 +116,12 @@ class Chess1:
         # ]
 
         # Player and opponent
-        if player == self.MAX:
-            player_color = 'w'
+        player_color=player[0]
+        if player_color == 'w':
             opponent_color = 'b'
             # pawn_table=pawn_table_white
             # knight_table=knight_table_white 
         else:
-            player_color = 'b' 
             opponent_color = 'w'
             # pawn_table=pawn_table_black
             # knight_table=knight_table_black
@@ -184,6 +183,8 @@ class Chess1:
 
         # Final evaluation
         total_score = material_score + positional_score + king_safety_score + pawn_structure_score + mobility_score + endgame_score + check_score
+        if(self.MAX=='black'):
+            total_score=-total_score
         return total_score
 
 
@@ -255,7 +256,7 @@ class Chess1:
         player_king = self.find_piece('wK' if player_color == 'w' else 'bK')
         if player_king:
             x, y = player_king
-            score += (7 - x) * 0.1 if player_color == 'w' else x * 0.1
+            score += (7 - x) * 0.1 if player_color == 'w' else x * 0.1#-------------------------------------------------
 
         # Check for passed pawns
         score += self.evaluate_pawn_structure(player_color)
@@ -355,7 +356,7 @@ class Chess1:
                 promotion_piece = self.choose_promotion(piece[0])  # Choose promotion piece
                 self.state[end[0]][end[1]] = promotion_piece
                 self.state[start[0]][start[1]] = "--"
-                return captured_piece, castling_rights_before, self.ActualState
+                return captured_piece, castling_rights_before
 
         if piece[1] == "K":
             if abs(start[1] - end[1]) == 2:  # Castling
