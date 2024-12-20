@@ -256,7 +256,7 @@ class Chess1:
         player_king = self.find_piece('wK' if player_color == 'w' else 'bK')
         if player_king:
             x, y = player_king
-            score += (7 - x) * 0.1 if player_color == 'w' else x * 0.1#-------------------------------------------------
+            score += (7 - x) * 0.1 if player_color == 'w' else -x * 0.1#-------------------------------------------------
 
         # Check for passed pawns
         score += self.evaluate_pawn_structure(player_color)
@@ -371,7 +371,7 @@ class Chess1:
         self.state[end[0]][end[1]] = self.state[start[0]][start[1]]  
         self.state[start[0]][start[1]] = "--"
 
-        return captured_piece, castling_rights_before
+        return captured_piece, castling_rights_before,self.state
  
 
  
@@ -411,14 +411,10 @@ class Chess1:
     
     def AvailablePieces(self, player): # returns [("piece name",(x,y))]
         Pieces = []
-        if (player == self.MAX):
-            for i in range(len(self.state)):
-                for j in range(len(self.state[i])):
-                    if 'w' in self.state[i][j]: Pieces.append((self.state[i][j], (i,j)))
-        else:
-            for i in range(len(self.state)):
-                for j in range(len(self.state[i])):
-                    if 'b' in self.state[i][j]: Pieces.append((self.state[i][j], (i,j)))
+        color=player[0]
+        for i in range(len(self.state)):
+            for j in range(len(self.state[i])):
+                if color in self.state[i][j]: Pieces.append((self.state[i][j], (i,j)))
                     
         return Pieces
     
@@ -616,7 +612,7 @@ class Chess1:
         v=-infinity
         for move in self.GetNextPossibleMoves(self.MAX):
             #print(self.DisplayBoard())
-            captured_piece,castling_rights = self.ExecuteMove(move)
+            captured_piece,castling_rights = self.ExecuteMove(move)[:2]
             score=self.MiniMax(self.MIN,alpha,beta,depth,maxDepth)
             self.UndoMove((move[0], move[1], captured_piece,castling_rights))
             v=max(v,score)
@@ -628,7 +624,7 @@ class Chess1:
         v=+infinity
         for move in self.GetNextPossibleMoves(self.MIN):
             #print(self.DisplayBoard())
-            captured_piece,castling_rights = self.ExecuteMove(move)
+            captured_piece,castling_rights = self.ExecuteMove(move)[:2]
             score=self.MiniMax(self.MAX,alpha,beta,depth,maxDepth)
             self.UndoMove((move[0],move[1],captured_piece,castling_rights))
             v=min(v,score)
@@ -649,9 +645,9 @@ class Chess1:
         alpha=-infinity
         beta=+infinity
         for move in self.GetNextPossibleMoves(player):
-            captured_piece,castling_rights = self.ExecuteMove(move)
+            captured_piece,castling_rights = self.ExecuteMove(move)[:2]
             #self.DisplayBoard()
-            moveScore=self.MiniMax(nextPlayer,alpha,beta,0,3)
+            moveScore=self.MiniMax(nextPlayer,alpha,beta,0,2)
             #print('move analyzed')
             self.UndoMove((move[0],move[1],captured_piece,castling_rights))
             if player==self.MAX:
@@ -709,7 +705,7 @@ class Chess1:
         protected=True
         if self.check(player,self.kingPosition(player)):
             for move in self.GetNextPossibleMoves(player):
-                captured_piece,castling_rights=self.ExecuteMove(move)
+                captured_piece,castling_rights=self.ExecuteMove(move)[:2]
                 if self.check(player,self.kingPosition(player)):
                     protected=False
                 else:
@@ -722,36 +718,37 @@ class Chess1:
         return True
 
     
-board=np.array([["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
-                 ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
-                 ["--", "--", "--", "--", "--", "--", "--", "--"],
-                 ["--", "--", "--", "--", "--", "--", "--", "--"],
-                 ["--", "--", "--", "--", "--", "wp", "--", "--"],
-                 ["--", "--", "--", "--", "--", "--", "--", "--"],
-                 ["wp", "wp", "wp", "wp", "wp", "--", "wp", "wp"],
-                 ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]])
-# board=np.array([['--' ,'bR', 'bB', 'bQ', 'bK', 'bB', '--', 'bR'],
-#  ['bp', 'bp', 'bp', 'bp', 'bp', 'bp', 'bp' ,'bp'],
-#  ['--' ,'--' ,'--', '--', '--', '--', '--' ,'--'],
-#  ['--', '--' ,'--', '--', '--', '--', '--' ,'--'],
-#  ['--', '--' ,'--', '--', '--', 'wp', '--', '--'],
-#  ['wp', '--' ,'--', '--', '--', '--', '--' ,'--'],
-#  ['--', 'wp' ,'wp' ,'bN', 'bN', '--', 'wp', 'wp'],
-#  ['wR' ,'wN' ,'wB', 'wQ', 'wK', 'wB', 'wN' ,'wR']])
+# board=np.array([["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
+#                  ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
+#                  ["--", "--", "--", "--", "--", "--", "--", "--"],
+#                  ["--", "--", "--", "--", "--", "--", "--", "--"],
+#                  ["--", "--", "--", "--", "--", "wp", "--", "--"],
+#                  ["--", "--", "--", "--", "--", "--", "--", "--"],
+#                  ["wp", "wp", "wp", "wp", "wp", "--", "wp", "wp"],
+#                  ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]])
+
+board=np.array([['--' ,'bR', '--', 'bQ', 'bK', 'bB', '--', 'bR'],
+                ['bp', '--', 'bp', 'bp', 'bp', 'bp', 'bp' ,'bp'],
+                ['bB' ,'--' ,'--', '--', '--', '--', '--' ,'--'],
+                ['--', 'bp' ,'--', '--', '--', '--', 'bR' ,'--'],
+                ['--', '--' ,'--', '--', 'wQ', 'wp', '--', 'wp'],
+                ['wp', '--' ,'--', '--', '--', '--', '--' ,'--'],
+                ['--', 'wp' ,'wp' ,'--', '--', '--', 'wp', '--'],
+                ['wR' ,'wN' ,'wB', '--', 'wK', 'wB', 'wN' ,'--']])
 
 
-c=Chess1()
-c.state = board
-# print(c.generate_possible_moves(("bN",(6,3))))
-# print(c.GetBestMove(c.MAX))
+# c=Chess1()
+# c.state = board
+# # print(c.generate_possible_moves(("bN",(6,3))))
+# # print(c.GetBestMove(c.MAX))
 # print(c.Evaluate(c.MAX))
 # print(c.Evaluate(c.MIN))
-bestMove,score=c.GetBestMove(c.MIN)
+# bestMove,score=c.GetBestMove(c.MIN)
 # bestMove,score=(((0, 1), (4, 5)), 17.2)
-print(bestMove,score)
-captured_piece,castling_rights=c.ExecuteMove(bestMove)
-print("------------------------------------------")
-c.DisplayBoard()
+# print(bestMove,score)
+# captured_piece,castling_rights=c.ExecuteMove(bestMove)[:2]
+# print("------------------------------------------")
+# c.DisplayBoard()
 # print(c.state)
 # c.UndoMove((bestMove[0],bestMove[1],captured_piece,castling_rights))
 # print("\n")
