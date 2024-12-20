@@ -14,6 +14,7 @@ class Chess1:
         self.MAX = "white"
         self.MIN = "black"
         
+        self.debug = False
         #define a dictionairy "Actions" to contain the actions of each piece
         self.Actions ={ "p" : [(1,0)],
                         "R" : [(1,0), (-1,0), (0,1), (0,-1)],
@@ -597,7 +598,7 @@ class Chess1:
 #-------------------------------MiniMax no improvement-------------
     def MiniMax(self,player,alpha,beta,depth,maxDepth):
         self.nbExpandedNodes=self.nbExpandedNodes+1
-        # print("board:")
+        if self.debug: print(f"Expanded Nodes: {self.nbExpandedNodes}")
         # c.DisplayBoard()
         if self.GameOver() or maxDepth==depth:
             score = self.Evaluate(player)
